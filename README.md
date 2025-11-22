@@ -87,15 +87,16 @@ O curso é dividido em módulos progressivos, com exercícios práticos e acompa
 
 ## 👥 Membros do Projeto
 
-| Nome         |
-|--------------|
-| **Ana Eliza**|
-| **Lyvia**    |
-| **Nicole**   |
-| **Sergio**   |
-| **Tiago**    |
+| Nome         | GitHub |
+|--------------|--------|
+| **Ana Eliza**| [@anaelizatx](https://github.com/anaelizatx) |
+| **Lyvia**    | [@LyviaVilela](https://github.com/LyviaVilela) |
+| **Nicole**   | [@niiukiyo](https://github.com/niiukiyo) |
+| **Sergio**   | [@SergioJunior20](https://github.com/SergioJunior20) |
+| **Tiago**    | [@TiagoCosta777](https://github.com/TiagoCosta777) |
 
 ---
+
 <div align="center">
 
 **Disciplina:** Projeto InovaTec 
