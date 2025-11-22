@@ -11,8 +11,7 @@ O **Conectados na Melhor Idade** é um projeto dedicado à inclusão digital de 
 
 ## 🎯 Objetivos
 
-- Ensinar o uso básico de dispositivos digitais.  
-- Facilitar a comunicação entre idosos, familiares e amigos.  
+- Ensinar o uso básico de dispositivos digitais. Facilitar a comunicação entre idosos, familiares e amigos.  
 - Incentivar o acesso seguro a serviços online, como bancos, agendamentos e compras.  
 - Orientar sobre golpes digitais, segurança e boas práticas na internet.  
 - Acompanhar o progresso dos participantes com atividades e registro de presença.
