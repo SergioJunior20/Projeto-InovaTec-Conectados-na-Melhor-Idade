@@ -19,7 +19,7 @@ O **Conectados na Melhor Idade** é um projeto dedicado à inclusão digital de 
 ---
 ### 🧩 Protótipo
 
-- [Figma](https://www.figma.com/design/euUdvsvcAL3uGl22NPmRjs/Prototipo?m=auto&t=0Jh0PfjvpJQZvYV2-1)
+- [Figma](https://www.figma.com/design/GzvQRLo6gc79rH6Hsspvwz/Prototipo-conectado-na-melhor-idade?m=auto&t=AoPWFPki9Mr0lJU7-1)
 
 ---
 ## 🧩 Estrutura Pedagógica
