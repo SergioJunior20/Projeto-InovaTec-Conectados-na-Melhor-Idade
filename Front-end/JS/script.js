@@ -1,370 +1,107 @@
-// Dados do usuário
-let currentUser = {
-    name: '',
-    confidence: 0,
-    level: 'Iniciante Total',
-    answers: []
+const API_URL = 'http://localhost:3000';
+
+let currentUser = JSON.parse(localStorage.getItem('currentUser')) || {
+  id_usuario: null,
+  name: '',
+  confidence: 0,
+  level: 'Iniciante Total',
+  answers: [],
+  completedLessons: []
 };
 
-// Perguntas do quiz
 const quizQuestions = [
-    {
-        question: "O quanto você se sente à vontade em mexer em um celular?",
-        options: [
-            "Nunca usei - Sou iniciante total",
-            "Uso pouco - Só atendo chamadas",
-            "Uso bem - Consigo mandar mensagens",
-            "Uso bastante - Fotos, redes sociais e mais"
-        ],
-        scores: [1, 2, 3, 4]  // Alterado para 1-4 em vez de 0-3
-    },
-    {
-        question: "Você sabe usar o WhatsApp?",
-        options: [
-            "Não sei o que é",
-            "Só atendo ligações",
-            "Consigo mandar mensagens",
-            "Mando fotos, áudios e faço videochamadas"
-        ],
-        scores: [1, 2, 3, 4]  // Alterado para 1-4
-    },
-    {
-        question: "Como você lida com fotos no celular?",
-        options: [
-            "Não tiro fotos",
-            "Consigo tirar, mas não sei enviar",
-            "Tiro e envio para contatos",
-            "Organizo álbuns e compartilho nas redes"
-        ],
-        scores: [1, 2, 3, 4]  // Alterado para 1-4
-    },
-    {
-        question: "Você já fez alguma transação pelo celular?",
-        options: [
-            "Nunca - Tenho medo",
-            "Já visualizei extrato",
-            "Fiz transferência com ajuda",
-            "Faço PIX e pagamentos sozinho(a)"
-        ],
-        scores: [1, 2, 3, 4]  // Alterado para 1-4
-    },
-    {
-        question: "Como você se sente com tecnologia?",
-        options: [
-            "Fico nervoso(a) e evito",
-            "Uso só o necessário",
-            "Gosto de aprender coisas novas",
-            "Adoro tecnologia e sempre quero mais"
-        ],
-        scores: [1, 2, 3, 4]  // Alterado para 1-4
-    }
+  {question:'O quanto você se sente à vontade em mexer em um celular?',options:['Nunca usei - Sou iniciante total','Uso pouco - Só atendo chamadas','Uso bem - Consigo mandar mensagens','Uso bastante - Fotos, redes sociais e mais'],scores:[1,2,3,4]},
+  {question:'Você sabe usar o WhatsApp?',options:['Não sei o que é','Só atendo ligações','Consigo mandar mensagens','Mando fotos, áudios e faço videochamadas'],scores:[1,2,3,4]},
+  {question:'Como você lida com fotos no celular?',options:['Não tiro fotos','Consigo tirar, mas não sei enviar','Tiro e envio para contatos','Organizo álbuns e compartilho nas redes'],scores:[1,2,3,4]},
+  {question:'Você já fez alguma transação pelo celular?',options:['Nunca - Tenho medo','Já visualizei extrato','Fiz transferência com ajuda','Faço PIX e pagamentos sozinho(a)'],scores:[1,2,3,4]},
+  {question:'Como você se sente com tecnologia?',options:['Fico nervoso(a) e evito','Uso só o necessário','Gosto de aprender coisas novas','Adoro tecnologia e sempre quero mais'],scores:[1,2,3,4]}
 ];
 
-// Tutorial de PIX
-const pixTutorial = {
-    title: "Aprendendo a Fazer PIX",
-    subtitle: "Transferências rápidas e seguras",
-    steps: [
-        {
-            instruction: "Abra o aplicativo do seu banco",
-            simulation: "mostrarAppBanco"
-        },
-        {
-            instruction: "Toque em 'PIX' ou 'Transferência'",
-            simulation: "mostrarMenuPix"
-        },
-        {
-            instruction: "Escolha 'Fazer PIX'",
-            simulation: "mostrarOpcaoFazerPix"
-        },
-        {
-            instruction: "Digite a chave PIX do destinatário",
-            simulation: "mostrarCampoChavePix"
-        },
-        {
-            instruction: "Confirme os dados e valor",
-            simulation: "mostrarConfirmacaoPix"
-        },
-        {
-            instruction: "Digite sua senha para autorizar",
-            simulation: "mostrarCampoSenha"
-        }
-    ]
+const lessons = {
+  whatsapp:{id:1,title:'WhatsApp',icon:'💬',difficulty:'Fácil',description:'Aprenda a mandar mensagens, áudios e fotos para sua família.',steps:[['Abra o WhatsApp no seu celular','💬','Procure o ícone verde com um telefone.'],['Escolha uma conversa','👨‍👩‍👧','Toque no nome da pessoa com quem quer falar.'],['Digite sua mensagem','⌨️','Escreva com calma no campo de texto.'],['Toque em enviar','➡️','O botão geralmente parece uma setinha.']]},
+  fotos:{id:2,title:'Tirar e Enviar Fotos',icon:'📸',difficulty:'Fácil',description:'Guarde momentos importantes e compartilhe com quem você ama.',steps:[['Abra a câmera','📷','Procure o ícone de câmera no celular.'],['Aponte para o que quer fotografar','🎯','Segure o celular firme.'],['Toque no botão redondo','⚪','Esse botão tira a foto.'],['Compartilhe pelo WhatsApp','💬','Escolha a foto e toque em compartilhar.']]},
+  videochamada:{id:3,title:'Videochamadas',icon:'📹',difficulty:'Médio',description:'Veja filhos, netos e amigos mesmo estando longe.',steps:[['Abra uma conversa','💬','Entre no WhatsApp e escolha a pessoa.'],['Toque na câmera','📹','O ícone fica na parte de cima da conversa.'],['Aguarde a pessoa atender','⏳','Pode demorar alguns segundos.'],['Para encerrar, toque no botão vermelho','🔴','Isso finaliza a chamada.']]}
 };
 
-// Variáveis globais
+const pixSteps = [
+  ['Abra o aplicativo do seu banco','🏦','Nunca abra links recebidos por mensagem para entrar no banco.'],
+  ['Toque em PIX','💰','Procure o botão PIX na tela inicial.'],
+  ['Escolha Fazer PIX','📤','Essa opção inicia uma transferência.'],
+  ['Digite a chave PIX','🔑','Confirme se a chave está correta.'],
+  ['Confira nome e valor','✅','Leia tudo com atenção antes de confirmar.'],
+  ['Digite sua senha apenas no app oficial','🔒','Nunca informe sua senha para outra pessoa.']
+];
+
 let currentQuestionIndex = 0;
 let currentPixStep = 0;
+let currentLessonKey = null;
+let currentLessonStep = 0;
 
-// Funções de navegação
-function showScreen(screenId) {
-    // Esconder todas as telas
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
+function persist(){localStorage.setItem('currentUser',JSON.stringify(currentUser));}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showAppSection(id, btn){document.querySelectorAll('.app-section').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');}
+
+function saveName(){const name=document.getElementById('userName').value.trim();if(!name){alert('Digite seu nome para continuar.');return;}currentUser.name=name;currentUser.answers=[];persist();startQuiz();}
+function startQuiz(){currentQuestionIndex=0;currentUser.answers=[];showScreen('quizScreen');showQuestion();}
+function showQuestion(){const q=quizQuestions[currentQuestionIndex];document.getElementById('questionText').textContent=q.question;document.getElementById('questionCounter').textContent=`${currentQuestionIndex+1} de ${quizQuestions.length}`;document.getElementById('progressFill').style.width=`${((currentQuestionIndex+1)/quizQuestions.length)*100}%`;const c=document.getElementById('optionsContainer');c.innerHTML='';q.options.forEach((op,i)=>{const div=document.createElement('div');div.className='option';div.textContent=op;if(currentUser.answers[currentQuestionIndex]===i)div.classList.add('selected');div.onclick=()=>selectOption(div,i);c.appendChild(div);});document.getElementById('prevBtn').style.visibility=currentQuestionIndex===0?'hidden':'visible';document.getElementById('nextBtn').textContent=currentQuestionIndex===quizQuestions.length-1?'Finalizar':'Próxima';}
+function selectOption(el,i){document.querySelectorAll('.option').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');currentUser.answers[currentQuestionIndex]=i;persist();}
+function previousQuestion(){if(currentQuestionIndex>0){currentQuestionIndex--;showQuestion();}}
+function nextQuestion(){if(currentUser.answers[currentQuestionIndex]===undefined){alert('Selecione uma opção.');return;}if(currentQuestionIndex<quizQuestions.length-1){currentQuestionIndex++;showQuestion();}else showQuizResult();}
+
+async function showQuizResult(){let total=0;currentUser.answers.forEach((a,i)=>total+=quizQuestions[i].scores[a]);let level,msg;if(total<=8){level='Iniciante Total';msg='Vamos começar do básico, passo a passo.';}else if(total<=12){level='Iniciante';msg='Você já tem uma base. Vamos praticar mais.';}else if(total<=16){level='Intermediário';msg='Você já sabe bastante. Vamos avançar.';}else{level='Avançado';msg='Você domina bem o celular. Vamos explorar funções extras.';}currentUser.level=level;currentUser.confidence=Math.round(((total-5)/15)*100);persist();document.getElementById('userNameDisplay').textContent=currentUser.name;document.getElementById('userScore').textContent=`${total}/20`;document.getElementById('resultMessage').textContent=msg;showScreen('resultScreen');await saveUserToApi(total,level);}
+
+async function saveUserToApi(total,level){const status=document.getElementById('apiStatus');try{const r=await fetch(`${API_URL}/usuarios`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nome:currentUser.name,nivel:level,pontuacao:total})});const data=await r.json();if(!r.ok)throw new Error(data.message||'Erro ao salvar');currentUser.id_usuario=data.id_usuario;persist();status.textContent='Dados salvos no banco com sucesso.';status.style.color='#067647';}catch(e){status.textContent='O app abriu, mas não conseguiu salvar no banco. Verifique se o back-end está ligado.';status.style.color='#b42318';}}
+
+async function startApp(){await loadProgressFromApi();const first=currentUser.name.split(' ')[0]||'usuário';document.getElementById('userGreeting').textContent=`Olá, ${first}! Seu nível: ${currentUser.level}`;document.getElementById('metricLevel').textContent=currentUser.level;document.getElementById('metricScore').textContent=`${currentUser.confidence}%`;document.getElementById('metricDone').textContent=currentUser.completedLessons.length;document.getElementById('nextSuggestion').textContent=currentUser.level.includes('Iniciante')?'Comece pelo WhatsApp e depois pratique fotos.':'Experimente PIX e dicas de segurança digital.';renderLessons();startPractice();showScreen('appScreen');showAppSection('dashboard',document.querySelector('.nav-btn'));}
+function restartQuiz(){if(confirm('Deseja refazer o questionário?')){showScreen('nameScreen');}}
+
+function renderLessons(){const c=document.getElementById('lessonCards');c.innerHTML='';Object.entries(lessons).forEach(([key,l])=>{const done=currentUser.completedLessons.includes(key);const card=document.createElement('article');card.className='learning-card';card.onclick=()=>openLesson(key);card.innerHTML=`<span>${l.icon}</span><h3>${l.title} ${done?'✅':''}</h3><span class="difficulty">${l.difficulty}</span><p>${l.description}</p>`;c.appendChild(card);});}
+function openLesson(key){currentLessonKey=key;currentLessonStep=0;showAppSection('lessonSection');updateLessonStep();}
+function updateLessonStep(){const l=lessons[currentLessonKey];const s=l.steps[currentLessonStep];document.getElementById('lessonTitle').textContent=l.title;document.getElementById('lessonDescription').textContent=l.description;document.getElementById('lessonVisual').innerHTML=`<div class="big">${s[1]}</div><strong>${s[0]}</strong><p>${s[2]}</p>`;document.getElementById('lessonStepText').textContent=`Passo ${currentLessonStep+1} de ${l.steps.length}`;document.getElementById('lessonNextBtn').textContent=currentLessonStep===l.steps.length-1?'Concluir aula':'Próximo';}
+function previousLessonStep(){if(currentLessonStep>0){currentLessonStep--;updateLessonStep();}}
+async function nextLessonStep(){const l=lessons[currentLessonKey];if(currentLessonStep<l.steps.length-1){currentLessonStep++;updateLessonStep();return;}if(!currentUser.completedLessons.includes(currentLessonKey)){currentUser.completedLessons.push(currentLessonKey);persist();}await saveProgressToApi(l.id);alert('Parabéns! Aula concluída e progresso salvo.');startApp();}
+
+function updatePixStep(){const s=pixSteps[currentPixStep];document.getElementById('pixDisplay').innerHTML=`<div class="big">${s[1]}</div><strong>${s[0]}</strong><p>${s[2]}</p>`;document.getElementById('pixStep').textContent=`Passo ${currentPixStep+1} de ${pixSteps.length}`;}
+async function nextPixStep(){if(currentPixStep<pixSteps.length-1){currentPixStep++;updatePixStep();}else{await saveProgressToApi(4);alert('Parabéns! Você concluiu o tutorial de PIX seguro e o progresso foi salvo.');}}
+function previousPixStep(){if(currentPixStep>0){currentPixStep--;updatePixStep();}}
+
+function startPractice(){const icons=[['💬','WhatsApp',true],['📷','Câmera',false],['☎️','Telefone',false],['⚙️','Configurações',false],['🖼️','Galeria',false],['🏦','Banco',false]];icons.sort(()=>Math.random()-.5);const c=document.getElementById('practiceIcons');c.innerHTML='';document.getElementById('practiceFeedback').textContent='';icons.forEach(([emoji,name,ok])=>{const b=document.createElement('button');b.className='practice-icon';b.title=name;b.textContent=emoji;b.onclick=()=>{const f=document.getElementById('practiceFeedback');if(ok){f.textContent='Muito bem! Você encontrou o WhatsApp.';f.className='feedback ok';}else{f.textContent=`Esse é ${name}. Tente encontrar o WhatsApp.`;f.className='feedback err';}};c.appendChild(b);});}
+
+
+async function saveProgressToApi(id_licao){
+  if(!currentUser.id_usuario) return;
+  try{
+    await fetch(`${API_URL}/progresso`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id_usuario:currentUser.id_usuario,id_licao,concluido:true})
     });
-    
-    // Mostrar a tela selecionada
-    document.getElementById(screenId).classList.add('active');
+  }catch(e){
+    console.log('Não foi possível salvar o progresso no banco.', e);
+  }
 }
 
-function saveName() {
-    const userName = document.getElementById('userName').value.trim();
-    
-    if (!userName) {
-        alert('Por favor, digite seu nome!');
-        return;
-    }
-    
-    currentUser.name = userName;
-    startQuiz();
-}
-
-// Sistema do Quiz
-function startQuiz() {
-    currentQuestionIndex = 0;
-    currentUser.answers = [];
-    showScreen('quizScreen');
-    showQuestion();
-}
-
-function showQuestion() {
-    const question = quizQuestions[currentQuestionIndex];
-    document.getElementById('questionText').textContent = question.question;
-    document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
-    
-    // Atualizar barra de progresso
-    const progressPercentage = ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
-    document.getElementById('progressFill').style.width = `${progressPercentage}%`;
-    
-    const optionsContainer = document.getElementById('optionsContainer');
-    optionsContainer.innerHTML = '';
-    
-    question.options.forEach((option, index) => {
-        const optionElement = document.createElement('div');
-        optionElement.className = 'option';
-        optionElement.textContent = option;
-        optionElement.onclick = () => selectOption(optionElement, index);
-        optionsContainer.appendChild(optionElement);
+async function loadProgressFromApi(){
+  if(!currentUser.id_usuario) return;
+  try{
+    const r=await fetch(`${API_URL}/progresso/${currentUser.id_usuario}`);
+    if(!r.ok) return;
+    const data=await r.json();
+    const lessonMap={1:'whatsapp',2:'fotos',3:'videochamada'};
+    data.forEach(item=>{
+      const key=lessonMap[item.id_licao];
+      if(key && item.concluido && !currentUser.completedLessons.includes(key)){
+        currentUser.completedLessons.push(key);
+      }
     });
-    
-    // Controlar visibilidade dos botões
-    document.getElementById('prevBtn').style.display = currentQuestionIndex > 0 ? 'block' : 'none';
-    document.getElementById('nextBtn').textContent = 
-        currentQuestionIndex === quizQuestions.length - 1 ? 'Finalizar' : 'Próxima Pergunta';
+    persist();
+  }catch(e){
+    console.log('Não foi possível carregar o progresso do banco.', e);
+  }
 }
 
-function selectOption(optionElement, optionIndex) {
-    // Remover seleção anterior
-    document.querySelectorAll('.option').forEach(opt => {
-        opt.classList.remove('selected');
-    });
-    
-    // Selecionar nova opção
-    optionElement.classList.add('selected');
-    
-    // Salvar resposta
-    currentUser.answers[currentQuestionIndex] = optionIndex;
-}
+async function submitSuggestion(){const txt=document.getElementById('suggestionText').value.trim();const st=document.getElementById('suggestionStatus');if(!txt){alert('Escreva uma sugestão antes de enviar.');return;}try{const r=await fetch(`${API_URL}/sugestoes`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_usuario:currentUser.id_usuario||1,mensagem:txt})});if(!r.ok)throw new Error();st.textContent='Sugestão enviada e salva no banco.';st.style.color='#067647';document.getElementById('suggestionText').value='';}catch(e){st.textContent='Sugestão registrada na tela, mas o back-end não respondeu.';st.style.color='#b42318';}}
+async function activateHelp(){try{await fetch(`${API_URL}/ajuda`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_usuario:currentUser.id_usuario||1,mensagem:'Usuário solicitou ajuda pelo botão de emergência.'})});alert('Pedido de ajuda registrado no sistema.');}catch(e){alert('Botão de ajuda acionado. Verifique se o back-end está ligado para salvar no banco.');}}
 
-function nextQuestion() {
-    if (currentUser.answers[currentQuestionIndex] === undefined) {
-        alert('Por favor, selecione uma opção!');
-        return;
-    }
-    
-    if (currentQuestionIndex < quizQuestions.length - 1) {
-        currentQuestionIndex++;
-        showQuestion();
-    } else {
-        showQuizResult();
-    }
-}
-
-function previousQuestion() {
-    if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        showQuestion();
-    }
-}
-
-function showQuizResult() {
-    // Calcular pontuação
-    let totalScore = 0;
-    currentUser.answers.forEach((answer, index) => {
-        totalScore += quizQuestions[index].scores[answer];
-    });
-    
-    const maxScore = quizQuestions.length * 4; // 4 pontos por pergunta máxima
-    const minScore = quizQuestions.length * 1; // 1 ponto por pergunta mínima
-    
-    // Determinar nível do usuário baseado na pontuação real
-    let userLevel, message;
-    
-    // Pontuação máxima possível: 5 questões × 4 pontos = 20
-    // Pontuação mínima possível: 5 questões × 1 ponto = 5
-    
-    if (totalScore <= 8) { // 5-8 pontos
-        userLevel = "Iniciante Total";
-        message = "Vamos começar do básico! Você vai aprender tudo passo a passo.";
-    } else if (totalScore <= 12) { // 9-12 pontos
-        userLevel = "Iniciante";
-        message = "Você já tem alguma experiência! Vamos fortalecer seus conhecimentos.";
-    } else if (totalScore <= 16) { // 13-16 pontos
-        userLevel = "Intermediário";
-        message = "Que bom! Você já sabe bastante. Vamos aprender coisas mais avançadas.";
-    } else { // 17-20 pontos
-        userLevel = "Avançado";
-        message = "Parabéns! Você domina o celular. Vamos explorar funcionalidades extras!";
-    }
-    
-    // Atualizar perfil do usuário
-    currentUser.confidence = Math.round(((totalScore - minScore) / (maxScore - minScore)) * 100);
-    currentUser.level = userLevel;
-    
-    // Atualizar tela de resultado
-    document.getElementById('userNameDisplay').textContent = currentUser.name;
-    document.getElementById('userScore').textContent = `${totalScore}/${maxScore}`;
-    document.getElementById('resultMessage').textContent = message;
-    
-    showScreen('resultScreen');
-}
-
-function startApp() {
-    // Usar apenas o primeiro nome do usuário na saudação
-    const firstName = currentUser.name.split(' ')[0];
-    document.getElementById('userGreeting').textContent = `Olá, ${firstName}! Seu nível: ${currentUser.level}`;
-    showScreen('appScreen');
-}
-
-function showAppSection(sectionId) {
-    // Esconder todas as seções
-    document.querySelectorAll('.app-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    // Remover active de todos os botões
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    
-    // Mostrar seção selecionada
-    document.getElementById(sectionId).classList.add('active');
-    
-    // Ativar botão correspondente
-    event.target.classList.add('active');
-}
-
-// Tutorial de PIX
-function nextPixStep() {
-    if (currentPixStep < pixTutorial.steps.length - 1) {
-        currentPixStep++;
-        updatePixStep();
-    } else {
-        alert('Parabéns! Agora você sabe fazer PIX com segurança!');
-    }
-}
-
-function previousPixStep() {
-    if (currentPixStep > 0) {
-        currentPixStep--;
-        updatePixStep();
-    }
-}
-
-function updatePixStep() {
-    const step = pixTutorial.steps[currentPixStep];
-    document.getElementById('pixStep').textContent = step.instruction;
-    
-    // Simular a tela do aplicativo
-    const display = document.getElementById('pixDisplay');
-    const emojis = {
-        'mostrarAppBanco': '🏦',
-        'mostrarMenuPix': '💰',
-        'mostrarOpcaoFazerPix': '📤',
-        'mostrarCampoChavePix': '🔑',
-        'mostrarConfirmacaoPix': '✅',
-        'mostrarCampoSenha': '🔒'
-    };
-    
-    const descriptions = {
-        'mostrarAppBanco': 'Aplicativo do seu banco',
-        'mostrarMenuPix': 'Menu de opções do PIX',
-        'mostrarOpcaoFazerPix': 'Toque em "Fazer PIX"',
-        'mostrarCampoChavePix': 'Digite a chave PIX do destinatário',
-        'mostrarConfirmacaoPix': 'Confirme os dados da transferência',
-        'mostrarCampoSenha': 'Digite sua senha para autorizar'
-    };
-    
-    display.innerHTML = `
-        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;">
-            <div style="font-size:48px;">${emojis[step.simulation] || '💰'}</div>
-            <div style="text-align:center;padding:20px;font-size:18px;color:#666;">
-                ${descriptions[step.simulation] || 'Siga as instruções na tela.'}
-            </div>
-        </div>
-    `;
-}
-
-// Funções auxiliares
-function showHelp() {
-    alert("Ajuda: Toque em qualquer item para aprender sobre ele! Use o botão 🆘 se precisar de assistência urgente.");
-}
-
-function restartQuiz() {
-    if(confirm("Deseja refazer o questionário para atualizar seu nível de conhecimento?")) {
-        showScreen('quizScreen');
-        startQuiz();
-    }
-}
-
-function startTraining() {
-    alert("Iniciando área de treino seguro! Aqui você pode praticar sem medo de errar.");
-    // Aqui você implementaria a lógica do treino seguro
-}
-
-function startTutorial(tutorialType) {
-    const tutorialNames = {
-        'whatsapp': 'WhatsApp',
-        'fotos': 'Tirar e Enviar Fotos',
-        'videochamada': 'Videochamadas'
-    };
-    
-    alert(`Iniciando tutorial: ${tutorialNames[tutorialType]}`);
-    // Aqui você implementaria a lógica específica para cada tipo de tutorial
-}
-
-function startPractice(practiceType) {
-    const practiceNames = {
-        'icones': 'Encontre o Ícone',
-        'arrastar': 'Arraste e Solte',
-        'quiz': 'Perguntas e Respostas'
-    };
-    
-    alert(`Iniciando prática: ${practiceNames[practiceType]}`);
-    // Aqui você implementaria a lógica específica para cada tipo de prática
-}
-
-function submitSuggestion() {
-    const suggestionText = document.getElementById('suggestionText').value.trim();
-    
-    if (!suggestionText) {
-        alert('Por favor, escreva sua sugestão!');
-        return;
-    }
-    
-    alert('Obrigado pela sua sugestão! Vamos analisar com carinho. 💖');
-    
-    document.getElementById('suggestionText').value = '';
-}
-
-function activateHelp() {
-    alert('Sua família foi avisada! Eles entrarão em contato em breve.');
-}
-
-// Inicialização
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar o tutorial de PIX
-    if (document.getElementById('pixDisplay')) {
-        updatePixStep();
-    }
-});
+document.addEventListener('DOMContentLoaded',()=>{updatePixStep();renderLessons();if(currentUser.name){document.getElementById('userName').value=currentUser.name;}});
