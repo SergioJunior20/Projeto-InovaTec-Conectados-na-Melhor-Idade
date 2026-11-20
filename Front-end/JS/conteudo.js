@@ -20,5 +20,3 @@ const pixSteps = [
   ['Confira nome e valor','✅','Leia tudo com atenção antes de confirmar.'],
   ['Digite sua senha apenas no app oficial','🔒','Nunca informe sua senha para outra pessoa.']
 ];
-
-

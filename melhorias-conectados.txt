@@ -1,0 +1,92 @@
+CONECTADOS NA MELHOR IDADE
+Apresentação das melhorias
+
+O Conectados na Melhor Idade ganhou uma interface responsiva e novas
+ferramentas de aprendizagem e acompanhamento. A plataforma foi desenvolvida
+para ajudar pessoas idosas a usar o celular com mais autonomia e segurança,
+com apoio de instrutores.
+
+INTERFACE E ACESSIBILIDADE
+
+O painel inicial reúne a próxima aula sugerida, o progresso e a meta semanal.
+A navegação funciona por teclado, com indicação visível do foco, e os botões
+têm áreas de toque maiores. O participante pode aumentar o tamanho da letra
+até 200%, ativar o alto contraste, simplificar a interface, ouvir o conteúdo
+em voz alta e habilitar sons de confirmação. O guia inclui comandos de voz
+em navegadores compatíveis.
+
+ÁREA DO PARTICIPANTE
+
+As aulas de WhatsApp, fotos, videochamadas e PIX seguro continuam disponíveis
+em tutoriais passo a passo. O PIX agora também conta no cálculo do progresso.
+A biblioteca permite pesquisar e filtrar aulas e baixar guias. Os exercícios de
+segurança usam situações fictícias, como mensagens suspeitas, pedidos
+urgentes de transferência e páginas falsas, com explicações após a resposta.
+
+O perfil reúne foto armazenada no dispositivo, histórico, tempo de estudo,
+medalhas, frequência e certificado. O certificado é disponibilizado em PDF
+com QR Code após a conclusão das quatro aulas. A agenda mensal mostra
+encontros, avisos e respostas aos pedidos de ajuda. O painel apresenta uma
+missão de segurança e indica quando há uma aula próxima.
+
+ÁREA DA FAMÍLIA
+
+Por convite do participante, o familiar pode acompanhar o resumo da trilha,
+consultar avisos e conversar com a equipe. O participante pode encerrar o
+compartilhamento na própria plataforma.
+
+ÁREA DO INSTRUTOR
+
+A equipe pode cadastrar participantes e turmas, efetuar matrículas,
+agendar encontros, registrar presenças e acrescentar observações
+pedagógicas. Também pode publicar avisos, responder a pedidos de ajuda e
+acompanhar indicadores e gráficos de progresso, frequência, engajamento
+e dificuldades. Os relatórios podem ser exportados em PDF e Excel.
+O encerramento de uma matrícula preserva as presenças anteriores.
+
+AURORA IA
+
+A Aurora sugere uma trilha com base no diagnóstico inicial e recomenda
+revisões a partir dos erros recentes. O chat responde a perguntas frequentes
+sobre celular, computador, internet e segurança usando regras e conteúdo
+do curso. A tutora adapta as orientações ao nível do participante, propõe
+desafios, resume o progresso e aceita perguntas por ditado.
+
+BANCO DE DADOS E VALIDAÇÃO
+
+A API usa sessões para vincular o progresso e os pedidos de ajuda ao
+participante correto. A migração acrescenta tabelas para turmas, matrículas,
+encontros, presenças, avaliações, certificados e auditoria, preservando
+os registros anteriores. Foram validados em uma base MySQL isolada os
+fluxos de cadastro, autorização, recuperação de cadastro antigo, progresso,
+presença, certificado, suporte e indicadores. O modo multi-institucional
+usa um banco por domínio. As contas de instrutor podem usar autenticação
+em dois fatores e auditoria individual. As mensagens familiares são
+criptografadas no banco.
+
+ESTADO ATUAL
+
+A versão está disponível para testes locais. O isolamento entre dois
+bancos, os convites, o segundo fator, a criptografia e as exportações
+foram testados. Antes da implantação real, ainda faltam validação visual
+e assistiva, teste de carga e revisão das práticas de privacidade de cada
+instituição. Vídeos, editor de módulos e notificações externas seguem
+pendentes.
+
+COMPANHEIRO DIGITAL E INSTALAÇÃO WEB
+
+A nova versão apresenta um painel ilustrado, um passeio guiado e um
+Companheiro Digital que sugere a próxima aula ou a retomada dos estudos.
+As ações de aprendizagem alimentam XP, níveis, medalhas, sequência e
+missões. O participante pode usar o modo essencial e a fonte OpenDyslexic.
+
+Os familiares convidados acompanham a atividade recente e enviam mensagens
+de incentivo. Na comunidade, a equipe revisa cada publicação. O painel
+do instrutor apresenta as dificuldades por tema, o engajamento por turma
+e a evolução diária dos estudos.
+
+A aplicação pode ser instalada como PWA em navegadores compatíveis. Após
+o primeiro acesso conectado, aulas e práticas podem ser abertas offline.
+O progresso e o tempo de estudo podem ser enviados ao voltar a conexão
+com a conta ativa. Aplicativos nativos, notificações push, eventos online
+e avaliação com leitores de tela continuam pendentes.

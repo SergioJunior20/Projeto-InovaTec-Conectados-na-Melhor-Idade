@@ -1,0 +1,139 @@
+CONECTADOS NA MELHOR IDADE
+Análise do projeto e roteiro para implantação
+20 de novembro de 2026
+
+1. VISÃO GERAL
+
+O projeto já permite apresentar uma jornada completa de inclusão digital:
+o participante faz um diagnóstico, estuda, pratica, acompanha seu progresso
+e recebe um certificado. O instrutor organiza turmas e acompanha a
+aprendizagem. Um familiar convidado pode consultar o progresso e conversar
+com a equipe.
+
+Minha avaliação é que a próxima prioridade deve ser um piloto assistido em
+uma instituição. Antes de ampliar o currículo ou adicionar novos canais de
+comunicação, vale verificar se as pessoas conseguem realizar as tarefas
+principais com autonomia e se a equipe consegue operar e recuperar o sistema
+no dia a dia.
+
+2. O QUE JÁ EXISTE E O QUE AINDA PRECISA SER VALIDADO
+
+Participante e acessibilidade
+Há tutoriais de WhatsApp, fotos, videochamadas e PIX seguro, exercícios,
+biblioteca com filtros, agenda, histórico, tempo de estudo, medalhas e
+certificado PDF com QR Code. A interface inclui ajustes de letra, contraste,
+modo simplificado, leitura em voz alta e comandos de voz quando o navegador
+oferece suporte.
+Falta observar o uso real em celulares e com tecnologias assistivas.
+Também é importante avaliar se o tempo com a aula visível representa uma
+medida útil de estudo para os instrutores.
+
+Instrutor e família
+Há controle de matrícula e presença, observações, mensagens, avisos,
+indicadores e exportações em PDF e Excel. As contas individuais de instrutor
+são configuradas no ambiente. O participante controla o acesso familiar
+por convite e pode revogá-lo.
+É necessário validar recuperação de conta, uso em aparelho compartilhado,
+clareza das permissões e a rotina de resposta da equipe.
+
+Aurora
+A Aurora recomenda aulas e revisões, adapta orientações ao nível do aluno
+e usa respostas e desafios preparados a partir do conteúdo do curso.
+O próximo passo é medir onde as orientações ajudam, onde se repetem e em
+quais dúvidas a tutora precisa encaminhar o participante para o instrutor.
+
+Arquitetura, dados e segurança
+A aplicação usa Express e MySQL. No modo institucional, cada domínio aponta
+para um banco próprio. Há segundo fator para instrutores, auditoria de
+operações administrativas, limitação de solicitações por processo e
+criptografia das mensagens familiares. O teste integrado com duas bases
+validou os fluxos principais, incluindo o isolamento entre instituições.
+A implantação e a recuperação de dados ainda precisam ser ensaiadas no
+ambiente previsto para o piloto. A verificação visual e com leitores de
+tela também segue pendente.
+
+3. PRIORIDADE 1 — ANTES DE INICIAR O PILOTO
+
+A. Validar a jornada com o público-alvo
+   Testar com participantes de diferentes níveis de familiaridade digital:
+   fazer o diagnóstico, abrir uma aula, voltar, concluir uma atividade,
+   consultar a agenda e pedir ajuda. Observar em quais etapas precisaram
+   de orientação e registrar o motivo.
+   Critério de aceite sugerido: resolver os bloqueios que impedem uma
+   tarefa essencial e repetir o teste com o mesmo cenário.
+
+B. Revisar acessibilidade e corrigir obstáculos
+   Testar teclado, foco após mudanças de tela, leitores de tela, zoom de
+   200%, alto contraste, telas pequenas e uso sem microfone ou áudio.
+   Revisar principalmente o diagnóstico, a biblioteca, os exercícios,
+   os formulários de matrícula e o calendário.
+   Critério de aceite sugerido: registrar evidências por fluxo e fechar
+   os problemas impeditivos antes de declarar conformidade.
+
+C. Preparar a operação e proteger os dados
+   Ensaiar instalação, migração e restauração em ambiente separado, usando
+   uma cópia autorizada ou dados fictícios. Configurar HTTPS, credenciais
+   por banco e segundo fator. Definir quem atende pedidos de suporte e
+   de privacidade, quais dados são necessários e por quanto tempo ficam
+   guardados. Guardar as chaves de criptografia separadamente do backup.
+   Critério de aceite sugerido: restaurar um backup de ponta a ponta e
+   confirmar acesso, presença, certificado e leitura de mensagens.
+
+D. Revisar permissões e recuperação de acesso
+   Repetir os testes no ambiente configurado para a instituição. Incluir
+   tentativa de acesso com vínculo familiar revogado, conta de instrutor
+   desativada e certificado de outro domínio. Documentar como recuperar
+   acesso quando um aluno troca de aparelho.
+   Critério de aceite sugerido: cada perfil visualiza apenas os dados
+   previstos e a equipe consegue orientar a recuperação sem improviso.
+
+4. PRIORIDADE 2 — DURANTE O PILOTO
+
+- Melhorar o painel com busca e paginação de participantes, turmas e
+  histórico. O painel atual lista até 500 participantes e o relatório
+  exporta até 1.000. Definir o alcance de cada indicador e exportação.
+- Monitorar disponibilidade, erros, tempo de resposta e falhas nas
+  exportações. Fazer testes de carga representativos, como uma turma
+  inteira entrando e registrando atividades ao mesmo tempo.
+- Facilitar a gestão de contas de instrutor com rotinas de criação,
+  recuperação e revogação. Se essas tarefas forem para o painel, definir
+  as permissões específicas de quem poderá executá-las.
+- Verificar se as recomendações da Aurora ajudam a retomar as atividades.
+  Priorizar conteúdo revisado por instrutores, exemplos reais de dúvidas
+  e encaminhamento claro quando o guia não cobre uma pergunta.
+- Medir se o fluxo familiar é útil e se os avisos internos chegam a tempo.
+  Avaliar notificações externas somente depois de definir o canal, as
+  permissões, a possibilidade de cancelar e quem fará o atendimento.
+
+5. PRIORIDADE 3 — DEPOIS DO PILOTO
+
+- Adicionar editor de conteúdo com revisão, publicação e controle de
+  versões. Incluir vídeos com legenda e transcrição conforme a demanda.
+- Ampliar o catálogo com base nas dificuldades observadas, mantendo
+  exercícios curtos e instruções em linguagem simples.
+- Expandir para novas instituições após validar os procedimentos de
+  operação. Se houver múltiplas réplicas, aplicar limitação de solicitações
+  compartilhada na infraestrutura.
+
+6. PERGUNTAS PARA A SUA ANÁLISE
+
+[ ] Quem será o primeiro público e quais são suas três tarefas essenciais?
+[ ] Qual instituição pode conduzir um piloto e quem será responsável por ele?
+[ ] Quais aparelhos, navegadores e leitores de tela devem entrar nos testes?
+[ ] Quais informações um familiar precisa receber e quais devem ficar restritas?
+[ ] Quem responde aos pedidos de ajuda e em quanto tempo?
+[ ] O certificado precisa registrar carga horária, assinatura ou nome da instituição?
+[ ] Quais indicadores serão usados para decidir se o piloto funcionou?
+
+7. COMO AVALIAR O PILOTO
+
+Combine com a equipe, antes do início, quatro medidas simples: quantas
+pessoas concluem o diagnóstico, quantas completam a primeira aula sem
+ajuda, quantas retornam para estudar e quais dúvidas aparecem com mais
+frequência. Registre o contexto das dificuldades para orientar as mudanças
+na interface, no conteúdo ou no atendimento.
+
+Materiais complementares no repositório
+- melhorias-conectados.txt — apresentação das funcionalidades entregues.
+- README.md — configuração, migrações e operação.
+- Back-end/test/institucional.test.js — teste integrado com duas bases.
