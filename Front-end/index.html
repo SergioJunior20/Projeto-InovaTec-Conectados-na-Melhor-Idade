@@ -1,173 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Conectado na Melhor Idade</title>
-  <link rel="stylesheet" href="CSS/style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Aulas práticas de inclusão digital para pessoas idosas.">
+  <meta name="theme-color" content="#1e514d">
+  <title>Conectados na Melhor Idade</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/assets/icone-192.png">
+  <link rel="stylesheet" href="CSS/style.css">
+  <script defer src="JS/conteudo.js"></script>
+  <script defer src="JS/jornada.js"></script>
+  <script defer src="JS/companheiro.js"></script>
+  <script defer src="JS/institucional.js"></script>
+  <script defer src="JS/script.js"></script>
 </head>
 <body>
-  <main class="container">
-    <section id="welcomeScreen" class="screen active">
-      <div class="hero">
-        <div class="logo-icon">👵📱</div>
-        <h1>Conectado na Melhor Idade</h1>
-        <p class="subtitle">Aprenda a usar o celular com calma, segurança e no seu ritmo.</p>
-        <div class="features-grid">
-          <article><span>🔎</span><h3>Letras grandes</h3><p>Interface pensada para leitura fácil.</p></article>
-          <article><span>🛡️</span><h3>Treino seguro</h3><p>Pratique sem alterar nada real.</p></article>
-          <article><span>💬</span><h3>Aulas simples</h3><p>WhatsApp, fotos, PIX e videochamadas.</p></article>
-          <article><span>👨‍👩‍👧</span><h3>Apoio familiar</h3><p>Botão para pedir ajuda quando precisar.</p></article>
-        </div>
-        <button class="btn btn-primary" onclick="showScreen('nameScreen')">Começar</button>
+  <a class="skip" href="#principal">Ir para o conteúdo</a>
+  <header class="top">
+    <div class="top-inner">
+      <a class="brand" href="#inicio"><img class="brand-logo" src="/assets/icone-192.png" width="44" height="44" alt=""><span>Conectados<span class="brand-sub">na Melhor Idade</span></span></a>
+      <div class="top-actions">
+        <button type="button" id="install-app" hidden>Instalar aplicativo</button>
+        <button type="button" id="read">Ouvir página</button>
+        <button type="button" id="access" aria-expanded="false" aria-controls="settings">Acessibilidade</button>
       </div>
-    </section>
-
-    <section id="nameScreen" class="screen">
-      <div class="card center-card">
-        <div class="logo-icon">👤</div>
-        <h2>Primeiro, diga seu nome</h2>
-        <p>Usaremos seu nome para personalizar sua experiência.</p>
-        <label for="userName">Nome completo</label>
-        <input id="userName" type="text" placeholder="Ex: Maria Silva" />
-        <button class="btn btn-primary" onclick="saveName()">Responder questionário</button>
-        <button class="btn btn-light" onclick="showScreen('welcomeScreen')">Voltar</button>
-      </div>
-    </section>
-
-    <section id="quizScreen" class="screen">
-      <div class="card">
-        <div class="top-line">
-          <h2>Questionário inicial</h2>
-          <span id="questionCounter">1 de 5</span>
-        </div>
-        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-        <h3 id="questionText"></h3>
-        <div id="optionsContainer" class="options-container"></div>
-        <div class="actions">
-          <button id="prevBtn" class="btn btn-light" onclick="previousQuestion()">Voltar</button>
-          <button id="nextBtn" class="btn btn-primary" onclick="nextQuestion()">Próxima</button>
-        </div>
-      </div>
-    </section>
-
-    <section id="resultScreen" class="screen">
-      <div class="card center-card">
-        <div class="logo-icon">🎉</div>
-        <h2>Cadastro concluído!</h2>
-        <p>Parabéns, <strong id="userNameDisplay"></strong>.</p>
-        <div class="score-box">
-          <span id="userScore">0/20</span>
-          <small id="resultMessage"></small>
-        </div>
-        <p id="apiStatus" class="api-status">Salvando seus dados...</p>
-        <button class="btn btn-primary" onclick="startApp()">Entrar no aplicativo</button>
-      </div>
-    </section>
-
-    <section id="appScreen" class="screen app-screen">
-      <header class="app-header">
-        <div>
-          <h1>👵📱 Conectado na Melhor Idade</h1>
-          <p id="userGreeting">Olá! Seu nível: Iniciante</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-small" onclick="restartQuiz()">Refazer quiz</button>
-          <button class="btn btn-small emergency" onclick="activateHelp()">🆘 Ajuda</button>
-        </div>
-      </header>
-
-      <nav class="main-nav">
-        <button class="nav-btn active" onclick="showAppSection('dashboard', this)">Início</button>
-        <button class="nav-btn" onclick="showAppSection('aprender', this)">Aprender</button>
-        <button class="nav-btn" onclick="showAppSection('pix', this)">PIX</button>
-        <button class="nav-btn" onclick="showAppSection('seguranca', this)">Segurança</button>
-        <button class="nav-btn" onclick="showAppSection('praticar', this)">Praticar</button>
-        <button class="nav-btn" onclick="showAppSection('sugestoes', this)">Sugestões</button>
-      </nav>
-
-      <div class="app-content">
-        <section id="dashboard" class="app-section active">
-          <h2>Resumo do aprendizado</h2>
-          <div class="dashboard-grid">
-            <div class="metric"><strong id="metricLevel">Iniciante</strong><span>Nível</span></div>
-            <div class="metric"><strong id="metricScore">0%</strong><span>Confiança</span></div>
-            <div class="metric"><strong id="metricDone">0</strong><span>Aulas concluídas</span></div>
-          </div>
-          <div class="card soft-card">
-            <h3>Próxima sugestão</h3>
-            <p id="nextSuggestion">Comece aprendendo a enviar mensagens no WhatsApp.</p>
-            <button class="btn btn-secondary" onclick="openLesson('whatsapp')">Iniciar aula sugerida</button>
-          </div>
-        </section>
-
-        <section id="aprender" class="app-section">
-          <h2>O que você quer aprender hoje?</h2>
-          <div class="learning-cards" id="lessonCards"></div>
-        </section>
-
-        <section id="lessonSection" class="app-section">
-          <button class="btn btn-light" onclick="showAppSection('aprender')">← Voltar às aulas</button>
-          <div class="tutorial-container">
-            <h2 id="lessonTitle"></h2>
-            <p id="lessonDescription"></p>
-            <div id="lessonVisual" class="phone-sim"></div>
-            <div class="tutorial-step" id="lessonStepText"></div>
-            <div class="actions">
-              <button class="btn btn-light" onclick="previousLessonStep()">Voltar</button>
-              <button class="btn btn-primary" onclick="nextLessonStep()" id="lessonNextBtn">Próximo</button>
-            </div>
-          </div>
-        </section>
-
-        <section id="pix" class="app-section">
-          <h2>Aprenda a fazer PIX com segurança</h2>
-          <div class="tutorial-container">
-            <div id="pixDisplay" class="phone-sim"></div>
-            <div class="tutorial-step" id="pixStep"></div>
-            <div class="actions">
-              <button class="btn btn-light" onclick="previousPixStep()">Voltar</button>
-              <button class="btn btn-primary" onclick="nextPixStep()">Próximo</button>
-            </div>
-          </div>
-        </section>
-
-        <section id="seguranca" class="app-section">
-          <h2>Dicas de segurança digital</h2>
-          <div class="learning-cards">
-            <article class="learning-card"><span>🔐</span><h3>Senhas seguras</h3><p>Não compartilhe senhas. Bancos nunca pedem senha por telefone.</p></article>
-            <article class="learning-card"><span>📞</span><h3>Golpes por ligação</h3><p>Desconfie de urgência, prêmios e pedidos de PIX.</p></article>
-            <article class="learning-card"><span>📲</span><h3>Apps confiáveis</h3><p>Baixe aplicativos apenas pela Play Store ou App Store.</p></article>
-            <article class="learning-card"><span>🔎</span><h3>Confira antes de pagar</h3><p>No PIX, verifique nome, valor e banco antes de confirmar.</p></article>
-          </div>
-        </section>
-
-        <section id="praticar" class="app-section">
-          <h2>Área de treino seguro</h2>
-          <p class="section-subtitle">Aqui você pratica sem risco. Nada é enviado de verdade.</p>
-          <div class="practice-box">
-            <h3 id="practiceTitle">Encontre o aplicativo</h3>
-            <p id="practiceInstruction">Toque no ícone do WhatsApp.</p>
-            <div class="icon-grid" id="practiceIcons"></div>
-            <p id="practiceFeedback" class="feedback"></p>
-            <button class="btn btn-secondary" onclick="startPractice()">Novo treino</button>
-          </div>
-        </section>
-
-        <section id="sugestoes" class="app-section">
-          <h2>Sugestões e feedback</h2>
-          <div class="card">
-            <label for="suggestionText">Escreva sua sugestão:</label>
-            <textarea id="suggestionText" placeholder="Ex: Gostaria de uma aula sobre baixar aplicativos"></textarea>
-            <button class="btn btn-primary" onclick="submitSuggestion()">Enviar sugestão</button>
-            <p id="suggestionStatus" class="api-status"></p>
-          </div>
-        </section>
-      </div>
-    </section>
-  </main>
-
-  <button class="floating-help" onclick="activateHelp()">🆘</button>
-  <script src="JS/script.js"></script>
+    </div>
+  </header>
+  <section id="settings" class="settings" hidden aria-labelledby="settings-title">
+    <h2 id="settings-title">Preferências de leitura</h2>
+    <label>Tamanho das letras <input type="range" id="font-size" min="100" max="200" step="5" value="100"><output id="font-percent" for="font-size">100%</output></label>
+    <label><input type="checkbox" id="contrast"> Alto contraste</label>
+    <label><input type="checkbox" id="simple"> Interface simplificada</label>
+    <label><input type="checkbox" id="ultra"> Mostrar só o essencial</label>
+    <label><input type="checkbox" id="dyslexic"> Fonte OpenDyslexic</label>
+    <label>Jornada <select id="journey-mode"><option value="auto">Adaptar automaticamente</option><option value="iniciante">Acompanhada</option><option value="intermediario">Equilibrada</option><option value="avancado">Direta</option></select></label>
+    <label><input type="checkbox" id="auto-read"> Ler conteúdo ao abrir</label>
+    <label><input type="checkbox" id="sound"> Som de confirmação</label>
+  </section>
+  <p id="connection-status" class="connection-status" role="status" hidden>Você está offline. As aulas baixadas e os exercícios continuam disponíveis neste dispositivo.</p>
+  <div class="layout">
+    <nav aria-label="Menu principal">
+      <span class="nav-caption">Minha jornada</span>
+      <a href="#inicio" data-essential>Início</a>
+      <a href="#guia">Guia e voz</a>
+      <a href="#aulas" data-essential>Aulas e biblioteca</a>
+      <a href="#praticar" data-essential>Praticar</a>
+      <a href="#seguranca">Segurança digital</a>
+      <a href="#aurora" data-essential>Aurora IA</a>
+      <a href="#perfil">Meu perfil</a>
+      <a href="#conquistas">Minhas conquistas</a>
+      <a href="#agenda">Agenda e avisos</a>
+      <a href="#ajuda" data-essential>Central de ajuda</a>
+      <span class="nav-caption nav-extra">Participação</span>
+      <a href="#comunidade">Comunidade</a>
+      <a href="#familia">Área da família</a>
+      <a href="#instrutor">Área do instrutor</a>
+    </nav>
+    <main id="principal" tabindex="-1" aria-labelledby="page-title">
+      <h1 id="page-title">Conectados na Melhor Idade</h1>
+    </main>
+  </div>
+  <footer>Conectados na Melhor Idade · Projeto de inclusão digital</footer>
+  <div id="status" role="status" aria-live="polite"></div>
 </body>
 </html>
