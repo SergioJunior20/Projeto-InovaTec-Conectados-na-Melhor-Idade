@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const mysql = require('mysql2/promise');
 const path = require('node:path');
 const { randomBytes, randomUUID, createHash } = require('node:crypto');
@@ -8,6 +9,13 @@ const { staffAuth, rateLimit } = require('./seguranca');
 const registerServices = require('./servicos');
 const registerDocuments = require('./documentos');
 const registerJourney = require('./jornada');
+const registerAssessments = require('./avaliacoes');
+const registerAurora = require('./aurora');
+
+function publicFile(pathname) {
+  return ['/', '/index.html', '/manifest.webmanifest', '/sw.js'].includes(pathname) ||
+    /^\/(CSS|JS|assets)\//.test(pathname);
+}
 
 function createApp(options = {}) {
   const app = express();
@@ -17,6 +25,11 @@ function createApp(options = {}) {
     user: options.usuario || process.env.DB_USER || 'root',
     password: options.senha ?? process.env.DB_PASSWORD ?? '',
     database: options.banco || process.env.DB_NAME || 'conectado_melhor_idade',
+    ssl: process.env.DB_TLS === '1' ? {
+      rejectUnauthorized:true,
+      verifyIdentity:true,
+      ...(process.env.DB_CA_PEM ? {ca:process.env.DB_CA_PEM.replace(/\\n/g,'\n')} : {})
+    } : undefined,
     connectionLimit: 10,
     queueLimit: 30,
     dateStrings: true
@@ -32,8 +45,15 @@ function createApp(options = {}) {
   });
 
   app.disable('x-powered-by');
+  app.use(compression({filter:(req,res) =>
+    (req.path==='/' || req.path==='/index.html' || req.path==='/sw.js' ||
+      req.path==='/manifest.webmanifest' || /^\/(CSS|JS)\//.test(req.path)) && compression.filter(req,res)
+  }));
   if (process.env.TRUST_LOCAL_PROXY === '1') app.set('trust proxy','loopback');
-  app.use(rateLimit({ duration: 60000, maximum: 120, key: req => req.ip }));
+  app.use(rateLimit({
+    duration:60000, maximum:120,
+    key:req => ['GET','HEAD'].includes(req.method) && publicFile(req.path) ? null : req.ip
+  }));
   app.use(rateLimit({ duration: 60000, maximum: 12, key: req => req.method === 'POST' && ['/instrutor/entrar', '/familia/ativar', '/ativar', '/usuarios'].includes(req.path) ? req.ip : null }));
   app.use(express.json({ limit: '16kb' }));
   app.use((req, res, next) => {
@@ -41,7 +61,7 @@ function createApp(options = {}) {
     res.set('Referrer-Policy', 'same-origin');
     res.set('X-Frame-Options', 'DENY');
     res.set('Content-Security-Policy', "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
-    if (!['/', '/licoes', '/saude'].includes(req.path) && !/^\/(CSS|JS)\//.test(req.path)) {
+    if (!publicFile(req.path) && !['/licoes','/saude'].includes(req.path)) {
       res.set('Cache-Control', 'no-store');
     }
     if (!['GET','HEAD','OPTIONS'].includes(req.method) && ['cross-site','same-site'].includes(req.get('sec-fetch-site'))) {
@@ -120,6 +140,7 @@ function createApp(options = {}) {
     await query('SELECT 1 FROM eventos_institucionais LIMIT 1');
     await query('SELECT 1 FROM comunidade_publicacoes LIMIT 1');
     await query('SELECT 1 FROM incentivos_familiares LIMIT 1');
+    await query('SELECT 1 FROM envios_avaliacao LIMIT 1');
     res.json({ status: 'ok' });
   });
 
@@ -257,15 +278,7 @@ function createApp(options = {}) {
     res.json({ mensagem: 'Consulta contabilizada.' });
   });
 
-  app.post('/avaliacoes', async (req, res) => {
-    const id = await learner(req);
-    const theme = field(req.body.tema, 50);
-    const answers = new Map([['Mensagens suspeitas', 1], ['Golpes bancários', 0], ['Pedidos de transferência', 1], ['Páginas falsas', 0]]);
-    if (!answers.has(theme)) problem(400, 'Exercício indisponível.');
-    const correct = integer(req.body.choice, 0, 1) === answers.get(theme);
-    await query('INSERT INTO avaliacoes (id_usuario,tema,correta) VALUES (?,?,?)', [id, theme, correct]);
-    res.json({ mensagem: 'Resposta registrada.' });
-  });
+  registerAssessments(app,{db,query,learner,field,integer,problem});
 
   app.post('/instrutor/entrar', async (req, res) => {
     const actor = auth.authenticate(req.body.usuario,req.body.chave);
@@ -285,7 +298,8 @@ function createApp(options = {}) {
     res.json({ token: auth.issue(actor,nonce) });
   });
 
-  app.get('/acesso/configuracao', (req, res) => res.json({ segundoFatorInstrutor: auth.enabled, contasIndividuais:auth.individual }));
+  const auroraLocal = registerAurora(app,{learner,field,problem,query,rateLimit});
+  app.get('/acesso/configuracao', (req, res) => res.json({ segundoFatorInstrutor: auth.enabled, contasIndividuais:auth.individual,auroraLocal }));
 
   registerServices(app, { query, learner, instructor, production, problem, field, integer, hash, audit, institutional: options.institucional, encryptionKey: options.criptografia || process.env.DADOS_CHAVE_HEX });
 
@@ -377,7 +391,12 @@ function createApp(options = {}) {
     res.json({ mensagem: 'Registro salvo.' });
   });
 
-  app.use(express.static(path.join(__dirname, '../Front-end')));
+  app.use(express.static(path.join(__dirname, '../Front-end'),{
+    setHeaders(res,file) {
+      const folder = path.basename(path.dirname(file));
+      res.setHeader('Cache-Control',folder==='assets'?'public, max-age=86400':'no-cache');
+    }
+  }));
   app.use((req, res) => res.status(404).json({ mensagem: 'Página ou recurso indisponível.' }));
   app.use((error, req, res, next) => {
     if (res.headersSent) return next(error);

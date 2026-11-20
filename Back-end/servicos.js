@@ -99,15 +99,17 @@ function registerServices(app, { query, learner, instructor, production, problem
 
   app.get('/familia/painel', async (req, res) => {
     const { id_acesso:id, id_usuario:student, nome } = await family(req);
-    const [profile, completion, news, conversation, study, medals] = await Promise.all([
+    const [profile, completion, news, conversation, study, medals, history, sent] = await Promise.all([
       query('SELECT nome,nivel FROM usuarios WHERE id_usuario=?', [student]),
       query('SELECT COUNT(DISTINCT id_licao) AS total FROM progresso WHERE id_usuario=? AND concluido=1 AND id_licao IN (1,2,3,4)', [student]),
       query('SELECT id_aviso,titulo,texto,criado_em FROM avisos ORDER BY id_aviso DESC LIMIT 15'),
       messages(id),
       query('SELECT COUNT(DISTINCT DATE(registrado_em)) AS dias,COALESCE(SUM(segundos),0) AS segundos FROM estudo_atividade WHERE id_usuario=? AND registrado_em>=CURRENT_DATE-INTERVAL 6 DAY',[student]),
-      query('SELECT DISTINCT id_licao FROM progresso WHERE id_usuario=? AND concluido=1 AND id_licao IN (3,4)',[student])
+      query('SELECT DISTINCT id_licao FROM progresso WHERE id_usuario=? AND concluido=1 AND id_licao IN (3,4)',[student]),
+      query('SELECT l.titulo,DATE(MAX(p.data_conclusao)) AS dia FROM progresso p JOIN licoes l USING(id_licao) WHERE p.id_usuario=? AND p.concluido=1 AND p.id_licao IN (1,2,3,4) GROUP BY p.id_licao,l.titulo ORDER BY dia DESC,p.id_licao',[student]),
+      query("SELECT id_acesso,criptograma,enviado_em,'incentivo' AS autor FROM incentivos_familiares WHERE id_acesso=? ORDER BY id_incentivo DESC LIMIT 10",[id])
     ]);
-    res.json({ familiar:nome, aluno:profile[0], concluidas:completion[0].total, avisos:news, mensagens:conversation, mensagensAtivas:Boolean(key), estudo:study[0], medalhas:medals.map(row => row.id_licao) });
+    res.json({ familiar:nome, aluno:profile[0], concluidas:completion[0].total, avisos:news, mensagens:conversation, mensagensAtivas:Boolean(key), estudo:study[0], medalhas:medals.map(row => row.id_licao), historico:history, incentivos:sent.map(decrypted) });
   });
 
   app.post('/familia/incentivo',async (req,res) => {

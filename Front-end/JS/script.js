@@ -1,13 +1,15 @@
 ﻿const main = document.querySelector('main');
 const statusBox = document.querySelector('#status');
+const staticDemo = globalThis.ConectadosConfig.demo;
+const storagePrefix = staticDemo ? 'demo:' + new URL('./',document.baseURI).pathname + ':' : '';
 
 function stored(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  try { return JSON.parse(localStorage.getItem(storagePrefix+key)) ?? fallback; }
   catch { return fallback; }
 }
 
 function store(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  try { localStorage.setItem(storagePrefix+key, JSON.stringify(value)); return true; }
   catch { notify('O navegador não conseguiu guardar esses dados neste dispositivo.'); return false; }
 }
 
@@ -16,6 +18,7 @@ let settings = stored('preferencias', {});
 let completed = new Set((user.completedLessons || []).filter(key => ['whatsapp', 'fotos', 'videochamada', 'pix'].includes(key)));
 let attempts = stored('tentativas', []);
 let chat = [];
+let tutorContext = {};
 let question = 0;
 let answers = [];
 let step = 0;
@@ -23,6 +26,7 @@ let iconRound = 0;
 let instructorKey = '';
 let generation = 0;
 let noticeTimer;
+let studentRequest;
 
 lessons.pix = { id: 4, title: 'PIX com segurança', icon: '🏦', difficulty: 'Médio', description: 'Pratique as etapas de uma transferência em um tutorial.', steps: pixSteps };
 const modules = {
@@ -54,6 +58,9 @@ function saveUser() {
 }
 
 async function api(url, { data, method = data ? 'POST' : 'GET', instructor = false } = {}) {
+  if (staticDemo) {
+    throw Object.assign(new Error('Este recurso está disponível na versão com servidor institucional.'),{status:503});
+  }
   const headers = {};
   if (data) headers['Content-Type'] = 'application/json';
   if (instructor) headers.Authorization = 'Bearer ' + instructorKey;
@@ -61,6 +68,15 @@ async function api(url, { data, method = data ? 'POST' : 'GET', instructor = fal
   const result = await response.json();
   if (!response.ok) throw Object.assign(new Error(result.mensagem || 'Não foi possível acessar o serviço.'), { status: response.status });
   return result;
+}
+
+function studentData() {
+  if (studentRequest?.account===user) return studentRequest.promise;
+  const request = {account:user,promise:api('/aluno')};
+  studentRequest = request;
+  return request.promise.finally(()=>{
+    if (studentRequest===request) studentRequest = undefined;
+  });
 }
 
 function heading(title, intro = '') {
@@ -94,11 +110,7 @@ function recommendation() {
 }
 
 function reviewTheme() {
-  const errors = new Map();
-  for (const entry of attempts.slice(-20)) {
-    errors.set(entry.tema, (errors.get(entry.tema) || 0) + (entry.correta ? -1 : 1));
-  }
-  return [...errors].sort((a, b) => b[1] - a[1]).find(([, score]) => score > 0)?.[0];
+  return Evolucao.recovery(attempts)?.tema;
 }
 
 function home() {
@@ -109,20 +121,16 @@ function home() {
     <div class="actions">${user.name && next ? link('aula/' + next, 'Continuar aprendendo', true) : user.name ? link('praticar', 'Revisar com exercícios', true) : link('diagnostico', 'Começar meu diagnóstico', true)}
     ${link('aulas', 'Ver todas as aulas')}${!user.name ? link('ativar', 'Usar código do instrutor') : ''}</div>
     ${!user.tourDone ? '<p class="tour-link"><a href="#tour">Fazer passeio guiado</a></p>' : ''}</div>
-    <img class="hero-people decorative" src="/assets/aprender-juntos.jpg" alt="" width="720" height="720"></section>
+    <img class="hero-people decorative" src="assets/aprender-juntos.jpg" alt="" width="560" height="560" decoding="async" fetchpriority="high"></section>
     ${journeySummary()}
     ${companionCard()}
     <div class="home-details">
-    ${card('Minha trilha', progress() + `<p>${next ? 'Próxima aula sugerida: ' + esc(lessons[next].title) : 'Você concluiu as quatro aulas. Que tal praticar mais?'}</p>`)}
-    ${card('Meta semanal', `<p>Pratique em dois dias da semana.</p><p>${weeklyDays()} de 2 dias de prática</p>${reviewTheme() ? '<p>Revisão sugerida: ' + esc(reviewTheme()) + '</p>' : ''}${link('praticar', 'Abrir exercícios')}`)}
+    <div class="dashboard-columns">${weeklyPlan()}${confidencePanel()}</div>
+    <div class="dashboard-columns">${dailySummary()}${progressTimeline()}</div>
     ${card('Missão de segurança', '<p>Experimente acertar um exercício em cada um dos quatro temas de segurança digital.</p><p>' + new Set(attempts.filter(item => item.correta).map(item => item.tema)).size + ' de 4 temas completados</p>' + link('praticar','Começar missão'))}
     <div id="study-details"></div><div id="encouragement"></div></div>`;
   loadEncouragement();
   if (user.id_usuario) displayStudy();
-}
-
-function weeklyDays() {
-  return Math.min(2,journeySnapshot().week);
 }
 
 function diagnose() {
@@ -161,9 +169,16 @@ async function syncProgress() {
   if (!account.id_usuario) return;
   const records = await api('/progresso/' + account.id_usuario);
   const remote = new Set(records.filter(p => p.concluido).map(p => Number(p.id_licao)));
+  const confirmed = new Map(records.filter(record=>record.concluido && record.data_conclusao)
+    .map(record=>[Number(record.id_licao),String(record.data_conclusao).slice(0,10)]));
   for (const [key, lesson] of Object.entries(lessons)) {
     if (user !== account) return;
-    if (remote.has(lesson.id)) completed.add(key);
+    if (remote.has(lesson.id)) {
+      completed.add(key);
+      if (confirmed.has(lesson.id) && !journeyEvents().some(event=>event.tipo==='conclusao' && event.tema===key)) {
+        user.journey = [...journeyEvents().slice(-359),{tipo:'conclusao',tema:key,dia:confirmed.get(lesson.id)}];
+      }
+    }
     else if (completed.has(key)) await api('/progresso', { data: { id_usuario: account.id_usuario, id_licao: lesson.id, concluido: true } });
   }
   if (user === account) saveUser();
@@ -233,16 +248,18 @@ const securityTips = [
   'Procure aplicativos na loja do seu dispositivo e confira o desenvolvedor.',
   'Antes de confirmar um PIX, leia o nome, o banco e o valor.'
 ];
-const tutorTopics = [
-  [/golpe|senha|segur|fraude|phishing|pix|banco/, 'Confira a origem da mensagem. Abra o aplicativo oficial por conta própria e guarde seus códigos e senhas. Você pode praticar na seção Praticar.'],
-  [/whats|mensag|audio|áudio/, 'Abra o WhatsApp, escolha o contato, escreva no campo de mensagem e toque no botão de enviar. A primeira aula mostra cada etapa.'],
-  [/foto|camera|câmera/, 'Abra a Câmera e toque no botão redondo. Para compartilhar, abra a foto na Galeria e toque no botão Compartilhar.'],
-  [/video|vídeo|chamada/, 'Abra a conversa da pessoa no WhatsApp e toque no ícone da câmera. O botão vermelho encerra a chamada.'],
-  [/computador|teclad|mouse/, 'Para clicar, leve a seta até o item usando o mouse. Aperte o botão esquerdo uma vez. Use Tab para passar por botões e links quando estiver usando o teclado.'],
-  [/rede|facebook|instagram/, 'Procure pessoas conhecidas e revise quem pode ver suas publicações nas configurações de privacidade.'],
-  [/internet|navega|site|google/, 'Abra o navegador e escreva o assunto na barra de busca. Confira o nome do site antes de informar dados pessoais.'],
-  [/celular|smartphone|aplicativo/, 'Volte à tela inicial do celular e procure o ícone do aplicativo. Toque uma vez para abrir.']
-];
+function tutorEntry(entry) {
+  return '<div class="tutor-entry"><strong>' + esc(entry.who) + '</strong><p class="tutor-text">' + esc(entry.text) + '</p>' +
+    (entry.lesson && Object.hasOwn(lessons,entry.lesson) ? link('aula/'+entry.lesson,'Ver aula: '+lessons[entry.lesson].title) : '') + '</div>';
+}
+
+function refreshAuroraRecommendation() {
+  const target = document.querySelector('#aurora-recommendation');
+  if (!target) return;
+  const pattern = AuroraPerfil.recurring(user.auroraLearning,Jornada.day());
+  const name = pattern && AuroraGuia.name(pattern.topic);
+  target.textContent = name ? 'Você voltou a perguntar sobre “' + name + '”. Vale revisar esse tema com calma.' : '';
+}
 
 function aurora() {
   const next = recommendation();
@@ -254,23 +271,34 @@ function aurora() {
     ${user.level?.startsWith('Iniciante') ? '<p>Experimente letras grandes ou leitura em voz alta no menu Acessibilidade.</p>' : ''}
     ${next ? link('aula/' + next, 'Abrir aula recomendada') : link('praticar', 'Abrir exercícios')}`) +
     (contextual ? card('Vamos revisar ' + contextual.title, '<ol class="history">' + contextual.steps.map(item => '<li><strong>' + esc(item[0]) + '</strong><p>' + esc(item[2]) + '</p></li>').join('') + '</ol>' + link('aula/'+contextKey,'Voltar à aula')) : '') +
-    card('Converse com a tutora', `<p>Use perguntas curtas sobre celular, computador ou segurança digital. As respostas vêm de um guia do curso.</p>
-    <div id="conversation" role="log" aria-label="Conversa com Aurora">${chat.map(entry => `<p><strong>${entry.who}:</strong> ${esc(entry.text)}</p>`).join('')}</div>
-    <form id="tutor"><label>Sua pergunta<input required maxlength="300" name="message"></label><div class="actions"><button class="primary">Perguntar</button><button id="voice-start" type="button">Ditar pergunta</button></div></form>
+    card('Converse com a tutora', `<p>Conte o que você quer fazer. Se souber, diga se usa Android, iPhone, Windows ou Mac.</p>
+    <div class="actions tutor-examples" aria-label="Perguntas de exemplo">${['Como ligar a lanterna?','Como aumentar as letras?','Como enviar uma foto no WhatsApp?'].map(question =>
+      `<button type="button" data-action="tutor-example" data-key="${esc(question)}">${esc(question)}</button>`).join('')}</div>
+    <div id="conversation" role="log" aria-label="Conversa com Aurora">${chat.map(tutorEntry).join('')}</div>
+    <form id="tutor"><label>Sua pergunta<input required maxlength="300" name="message" placeholder="Exemplo: ligar a lanterna no Samsung"></label>
+    <label id="aurora-local-choice" class="option" hidden><input type="checkbox" name="modelo"> Usar o modelo local da instituição. Evite informações pessoais.</label>
+    <div class="actions"><button class="primary">Perguntar</button><button id="voice-start" type="button">Ditar pergunta</button></div><p id="aurora-pending" role="status"></p></form>
     <p><button type="button" data-action="aurora-summary">Resumir meu progresso</button> <button type="button" data-action="aurora-exercise">Sugerir exercício</button>
-    <button type="button" data-action="aurora-read">Ouvir a última orientação</button></p><div id="aurora-response" role="status"></div>`));
+    <button type="button" data-action="aurora-read">Ouvir a última orientação</button></p><div id="aurora-response"></div>`) +
+    card('Personalização opcional', `<label class="option"><input type="checkbox" id="aurora-learning" ${user.auroraLearning?.enabled?'checked':''}> Lembrar os assuntos que eu pergunto neste aparelho</label>
+      <p class="muted">A Aurora guarda apenas os assuntos, a quantidade e a data. Desmarque para apagar esse histórico.</p><p id="aurora-recommendation" role="status"></p>`));
+  refreshAuroraRecommendation();
+  if (user.id_usuario && navigator.onLine) {
+    const choice = document.querySelector('#aurora-local-choice');
+    api('/acesso/configuracao').then(config=>{ if (choice.isConnected && config.auroraLocal) choice.hidden = false; }).catch(()=>{});
+  }
 }
 
 function profile() {
   view('Meu perfil', card(user.name || 'Complete seu diagnóstico', `
-    ${user.photo?.startsWith('data:image/jpeg;base64,') ? `<img class="avatar" src="${esc(user.photo)}" alt="Foto do participante">` : ''}
+    ${user.photo?.startsWith('data:image/jpeg;base64,') ? `<img class="avatar" src="${esc(user.photo)}" alt="Foto do participante" loading="lazy" decoding="async">` : ''}
     <p>Nível: ${esc(user.level || 'A descobrir')}</p>${progress()}
     ${user.name ? '<label>Foto do perfil neste dispositivo <input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>' : ''}
     <p class="actions">${link('diagnostico', user.name ? 'Refazer diagnóstico' : 'Começar diagnóstico', true)} ${link('ativar', 'Usar código do instrutor')}</p>`) +
     card('Histórico e conquistas', `<ul>${[...completed].map(key => `<li>${esc(lessons[key].title)} concluída</li>`).join('') || '<li>Suas aulas concluídas aparecerão aqui.</li>'}
     ${completed.size ? '<li>Medalha Primeira Aula</li>' : ''}${completed.size === 4 ? '<li>Medalha Trilha Completa</li>' : ''}
     ${attempts.some(item => item.correta) ? '<li>Medalha Prática Digital</li>' : ''}</ul>`) +
-    '<div id="student-details"></div><div id="study-details"></div>' +
+    confidencePanel() + progressTimeline() + companionPreferences() + '<div id="student-details"></div><div id="study-details"></div>' +
     (user.id_usuario ? card('Meus dados', '<a href="/participante/dados" download>Baixar cópia dos meus dados de estudo</a>') : ''));
   displayStudy(true);
   return loadStudent('perfil');
@@ -285,6 +313,11 @@ function notificationTotals(data) {
 }
 
 function updateNotificationLink(data) {
+  if (data.certificados?.length && !user.certified) {
+    user.certified = true;
+    saveUser();
+    if (['conquistas','perfil'].includes(route())) celebrate('Parabéns! Seu primeiro certificado foi emitido.');
+  }
   const latest = notificationTotals(data);
   const seen = user.avisosVistos || {};
   const unread = latest.aviso > (seen.aviso || 0) || latest.resposta > (seen.resposta || 0);
@@ -300,7 +333,7 @@ async function refreshNotifications() {
   if (!user.id_usuario) return;
   const id = user.id_usuario;
   try {
-    const data = await api('/aluno');
+    const data = await studentData();
     if (user.id_usuario === id) updateNotificationLink(data);
   } catch { /* A agenda oferece o estado de indisponibilidade. */ }
 }
@@ -315,9 +348,9 @@ async function loadStudent(page) {
     target.innerHTML = card('Agenda e informações da turma', '<p>Conclua seu cadastro para acessar os registros da turma.</p>');
     return;
   }
-  target.innerHTML = '<p role="status">Carregando dados da turma…</p>';
+  target.innerHTML = skeleton('Carregando dados da turma…');
   try {
-    const data = await api('/aluno');
+    const data = await studentData();
     if (!target.isConnected) return;
     if (page === 'agenda') {
       user.avisosVistos = notificationTotals(data);
@@ -374,7 +407,7 @@ function instructorView() {
 
 async function loadInstructor() {
   const target = document.querySelector('#instructor-details');
-  target.innerHTML = '<p role="status">Carregando painel…</p>';
+  target.innerHTML = skeleton('Carregando painel…');
   try {
     const requests = [
       api('/instrutor', { instructor: true }),
@@ -391,8 +424,7 @@ async function loadInstructor() {
     const completion = total && data.aulas ? Math.round(alunos.reduce((sum, a) => sum + Number(a.concluidas), 0) * 100 / (total * data.aulas)) + '%' : 'Sem registros';
     const inbox = (items, kind) => card(kind, items.map(item => `<p><strong>${esc(alunos.find(a => a.id_usuario === item.id_usuario)?.nome || 'Participante ' + item.id_usuario)}</strong> · ${esc(item.mensagem)}</p>`).join('') || '<p>Nenhum registro.</p>');
     target.innerHTML = `<div class="grid">${metric(total, 'Participantes cadastrados')}${metric(percentage(data.frequencia), 'Frequência registrada')}${metric(completion, 'Aulas concluídas')}${metric(data.certificados, 'Certificados emitidos')}${metric(data.aurora, 'Consultas à Aurora em 30 dias')}</div>` +
-      card('Evolução dos participantes', alunos.length ? `<div class="table-scroll"><table><thead><tr><th>Nome</th><th>Nível</th><th>Aulas</th><th>Última aula</th></tr></thead>
-      <tbody>${alunos.map(a => `<tr><th scope="row">${esc(a.nome)}</th><td>${esc(a.nivel)}</td><td>${esc(a.concluidas)}</td><td>${a.ultima_aula ? esc(dateBR(a.ultima_aula)) : 'Sem registro'}</td></tr>`).join('')}</tbody></table></div>` : '<p>Nenhum participante cadastrado.</p>') +
+      card('Evolução dos participantes', '<form id="student-search" class="search-line"><label>Buscar por nome<input name="busca" type="search" maxlength="100"></label><button>Buscar</button></form><div id="student-page"></div>') +
       card('Pontos para acompanhar', `<p>${alunos.filter(a => !a.ultima_aula || new Date(a.ultima_aula.replace(' ', 'T')) < new Date(Date.now() - 14 * 86400000)).length} participante(s) sem conclusão registrada nos últimos 14 dias.</p>` +
       `<p>${esc(data.engajamento.ativos)} participante(s) estudaram na plataforma nos últimos 14 dias. ${esc(studyMinute(data.engajamento.segundos))} no total.</p>` +
       (data.dificuldades.map(d => `<p>${esc(d.tema)} · ${esc(d.erros)} erros em ${esc(d.tentativas)} tentativas</p>`).join('') || '<p>Ainda não há respostas registradas nas avaliações.</p>')) +
@@ -405,9 +437,9 @@ async function loadInstructor() {
       }).join('') || '<p>Nenhuma turma cadastrada.</p>') +
       card('Relatórios pedagógicos', '<div class="actions"><button data-action="report" data-key="pdf">Baixar PDF</button><button data-action="report" data-key="xlsx">Baixar Excel</button></div>') +
       card('Engajamento e dificuldades', '<div id="executive-journey"><p role="status">Carregando indicadores…</p></div>') +
-      card('Moderação da comunidade', '<div id="moderation-list"><p role="status">Carregando publicações…</p></div>') +
+      card('Moderação da comunidade', '<details id="moderation-section"><summary>Ver publicações</summary><div id="moderation-list"></div></details>') +
       card('Auditoria administrativa', '<button data-action="audit">Consultar operações recentes</button><div id="audit-events"></div>') +
-      card('Central de mensagens familiares', '<div id="family-inbox"><p role="status">Carregando conversas…</p></div>') +
+      card('Central de mensagens familiares', '<details id="family-inbox-section"><summary>Ver conversas</summary><div id="family-inbox"></div></details>') +
       card('Cadastrar aluno', instructorForm('alunos', '<label>Nome completo<input name="nome" maxlength="100" required></label>')) +
       card('Cadastrar turma', instructorForm('turmas', '<label>Nome da turma<input name="nome" maxlength="100" required></label>')) +
       card('Matricular aluno', instructorForm('matriculas', students + classes)) +
@@ -422,9 +454,10 @@ async function loadInstructor() {
       (helps.length ? card('Responder a um pedido', instructorForm('respostas', select('id_pedido', 'Pedido', helps.map(item => [item.id_pedido, '#' + item.id_pedido + ' · ' + item.mensagem.slice(0, 65)])) + '<label>Resposta<textarea name="texto" required maxlength="1000"></textarea></label>')) : '') +
       inbox(suggestions, 'Sugestões') +
       '<p><button data-action="instructor-logout">Fechar painel</button></p>';
-    loadFamilyInbox();
+    deferPanel('#family-inbox-section','#family-inbox',loadFamilyInbox,'Carregando conversas…');
+    loadStudentPage();
     loadExecutiveJourney();
-    loadModeration();
+    deferPanel('#moderation-section','#moderation-list',loadModeration,'Carregando publicações…');
   } catch (error) {
     if (error.status === 401) instructorKey = '';
     if (target.isConnected) target.innerHTML = card('Painel indisponível', `<p>${esc(error.message)}</p>`);
@@ -454,6 +487,8 @@ function speak(text) {
   stopReading();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'pt-BR';
+  const portugueseVoice = window.speechSynthesis.getVoices().find(voice => /^pt[-_]BR$/i.test(voice.lang));
+  if (portugueseVoice) utterance.voice = portugueseVoice;
   utterance.rate = .88;
   const button = document.querySelector('#read');
   button.textContent = 'Parar leitura';
@@ -503,6 +538,12 @@ function render() {
     const current = anchor.hash === '#' + (page === 'aula' ? 'aulas' : page);
     if (current) anchor.setAttribute('aria-current', 'page');
     else anchor.removeAttribute('aria-current');
+  }
+  if (staticDemo && ['familia','instrutor','comunidade','agenda','ativar','certificado'].includes(page)) {
+    view('Recurso institucional',card('Disponível na versão com servidor',
+      '<p>Nesta demonstração você pode experimentar o diagnóstico, as aulas, os exercícios e a Aurora.</p>' + link('inicio','Voltar ao início',true)));
+    main.focus();
+    return;
   }
   switch (page) {
     case 'inicio': home(); break;
@@ -618,6 +659,14 @@ main.addEventListener('click', async event => {
   if (!button) return;
   const { action, key } = button.dataset;
   switch (action) {
+    case 'tutor-example': {
+      const input = main.querySelector('#tutor [name="message"]');
+      input.value = key;
+      input.focus();
+      break;
+    }
+    case 'access-check': runAccessibilityCheck(); break;
+    case 'student-page': loadStudentPage(Number(key),true); break;
     case 'share-achievement': await shareProgress(); break;
     case 'tour-back': tourStep = Math.max(0,tourStep-1); tourPage(); main.focus(); break;
     case 'tour-next':
@@ -676,11 +725,13 @@ main.addEventListener('click', async event => {
       button.disabled = true;
       const newlyCompleted = !completed.has(lessonKey);
       completed.add(lessonKey);
+      if (newlyCompleted) trackJourney('conclusao',lessonKey,0);
       if (user.id_usuario) user.progressPending = Date.now();
       const local = saveUser();
       chime();
       syncWithConnection();
-      notify(!local ? 'Aula concluída nesta sessão.' : newlyCompleted ? 'Parabéns! Aula concluída. Você ganhou 40 XP.' : 'Aula revisada. Parabéns por praticar!');
+      if (local && newlyCompleted) celebrate('Parabéns! Aula concluída. Você ganhou 40 XP.');
+      else notify(local ? 'Aula revisada. Parabéns por praticar!' : 'Aula concluída nesta sessão.');
       if (button.isConnected) location.hash = 'inicio';
       break;
     }
@@ -703,6 +754,17 @@ main.addEventListener('click', async event => {
 
 async function submit(form, data) {
   const renderId = generation;
+  if (form.id === 'companion-preferences') {
+    const name = data.nome.trim();
+    if (!name) return notify('Digite o nome do seu Companheiro.');
+    user.companion = {nome:name,avatar:data.avatar};
+    if (saveUser()) notify('Companheiro personalizado.');
+    return;
+  }
+  if (form.id === 'student-search') {
+    await loadStudentPage(1,true);
+    return;
+  }
   if (form.id === 'community-post') {
     await api('/comunidade',{data:{titulo:data.titulo,texto:data.texto,revisao:data.revisao==='on'}});
     notify('Publicação enviada para revisão.');
@@ -726,6 +788,7 @@ async function submit(form, data) {
       completed = new Set();
       attempts = [];
       chat = [];
+      tutorContext = {};
       store('tentativas', attempts);
       user = {};
     }
@@ -758,6 +821,10 @@ async function submit(form, data) {
       <p id="profile-status" role="status">Sincronizando cadastro…</p>${link('inicio', 'Abrir minha trilha', true)}`));
     main.focus();
     const feedback = document.querySelector('#profile-status');
+    if (staticDemo) {
+      feedback.textContent = local ? 'Diagnóstico salvo neste aparelho.' : 'Diagnóstico disponível nesta sessão.';
+      return;
+    }
     try {
       await syncProfile();
       await syncProgress();
@@ -771,8 +838,8 @@ async function submit(form, data) {
     }
     return;
   }
-  if (form.id.startsWith('exercise-')) {
-    const item = exercises[Number(form.id.split('-')[1])];
+  if (form.id.startsWith('exercise-') || form.id === 'aurora-revision') {
+    const item = exercises[form.id === 'aurora-revision' ? Number(form.dataset.exercise) : Number(form.id.split('-')[1])];
     const correta = Number(data.choice) === item.correct;
     user.successfulTopics = [...new Set([...(user.successfulTopics || []),...attempts.filter(a=>a.correta).map(a=>a.tema),...(correta?[item.theme]:[])])];
     attempts = [...attempts.slice(-199), { tema: item.theme, correta, date: Date.now() }];
@@ -780,28 +847,44 @@ async function submit(form, data) {
     trackJourney('exercicio',item.theme,0);
     form.querySelector('.feedback').textContent = (correta ? 'Você acertou! ' : 'Vamos revisar. ') + item.explanation;
     if (correta) chime();
-    if (user.id_usuario) {
-      try { await api('/avaliacoes', { data: { tema: item.theme, choice: Number(data.choice) } }); }
-      catch { notify('A resposta ficou neste dispositivo. O registro da turma está indisponível.'); }
-    }
+    queueAssessment(item.theme,Number(data.choice));
     return;
   }
   if (form.id === 'tutor') {
     const message = data.message.trim();
     if (!message) return;
-    const topic = tutorTopics.find(([pattern]) => pattern.test(normalize(message)));
-    const answer = topic
-      ? (user.level?.startsWith('Iniciante') ? 'Faça um passo de cada vez. ' : '') + topic[1] +
-        (user.level === 'Avançado' ? ' Depois, tente repetir sem consultar o guia e explique o processo com suas próprias palavras.' : '')
-      : 'Ainda não encontrei essa resposta no guia. Experimente perguntar sobre WhatsApp, internet ou senhas. A Central de ajuda também recebe perguntas.';
-    chat = [...chat.slice(-10), { who: 'Você', text: message }, { who: 'Aurora', text: answer }];
+    const reply = AuroraGuia.choose({question:message,context:tutorContext,level:user.level});
+    if (reply.explicitTopic && user.auroraLearning?.enabled) {
+      user.auroraLearning = AuroraPerfil.record(user.auroraLearning,reply.explicitTopic,Jornada.day());
+      saveUser();
+      refreshAuroraRecommendation();
+    }
+    tutorContext = reply.context;
+    let answer = reply.text;
+    const account = user;
+    const pending = form.querySelector('#aurora-pending');
+    let generated = false;
+    if (reply.topic && data.modelo==='on' && account.id_usuario) {
+      pending.textContent = 'Consultando o modelo local…';
+      try {
+        const result = await api('/aurora/consulta',{data:{tema:reply.topic,pergunta:message,modeloLocal:true}});
+        answer = result.orientacao;
+        generated = true;
+      } catch {
+        pending.textContent = 'A Aurora usou o guia do curso nesta resposta.';
+      }
+      if (generated) pending.textContent = 'Resposta elaborada pelo modelo local da instituição.';
+    } else pending.textContent = '';
+    if (user !== account || !form.isConnected) return;
+    const turn = [{ who: 'Você', text: message }, { who: 'Aurora', text: answer,lesson:reply.lesson }];
+    chat = [...chat.slice(-10), ...turn];
     const conversation = document.querySelector('#conversation');
-    conversation.insertAdjacentHTML('beforeend', `<p><strong>Você:</strong> ${esc(message)}</p><p><strong>Aurora:</strong> ${esc(answer)}</p>`);
+    conversation.insertAdjacentHTML('beforeend', turn.map(tutorEntry).join(''));
     while (conversation.children.length > 12) conversation.firstElementChild.remove();
     form.reset();
     form.elements.message.focus();
     if (settings['auto-read']) speak(answer);
-    if (user.id_usuario) api('/aurora/uso', { data: {} }).catch(() => {});
+    if (user.id_usuario && !generated) api('/aurora/uso', { data: {} }).catch(() => {});
     return;
   }
   if (form.id === 'instructor-login') {
@@ -847,9 +930,18 @@ main.addEventListener('submit', async event => {
 });
 
 window.addEventListener('hashchange', render);
+main.addEventListener('change',event=>{
+  if (event.target.id!=='aurora-learning') return;
+  if (event.target.checked) user.auroraLearning = {enabled:true,items:[]};
+  else delete user.auroraLearning;
+  saveUser();
+  refreshAuroraRecommendation();
+});
 document.querySelector('.skip').addEventListener('click', event => { event.preventDefault(); main.focus(); });
 applySettings();
+document.querySelector('#demo-notice').hidden = !staticDemo;
 render();
+setupMobileMenu();
 setupPWA();
 refreshNotifications();
 const initialGeneration = generation;

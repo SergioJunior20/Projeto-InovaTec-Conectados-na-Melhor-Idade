@@ -4,13 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Aulas práticas de inclusão digital para pessoas idosas.">
-  <meta name="theme-color" content="#1e514d">
+  <meta name="theme-color" content="#1565c0">
   <title>Conectados na Melhor Idade</title>
-  <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="apple-touch-icon" href="/assets/icone-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icone-192.png">
   <link rel="stylesheet" href="CSS/style.css">
+  <script defer src="JS/ambiente.js"></script>
+  <script defer src="JS/atualizacao.js"></script>
+  <script defer src="JS/aurora-guia.js"></script>
+  <script defer src="JS/aurora-perfil.js"></script>
   <script defer src="JS/conteudo.js"></script>
   <script defer src="JS/jornada.js"></script>
+  <script defer src="JS/evolucao.js"></script>
+  <script defer src="JS/painel.js"></script>
   <script defer src="JS/companheiro.js"></script>
   <script defer src="JS/institucional.js"></script>
   <script defer src="JS/script.js"></script>
@@ -19,9 +25,10 @@
   <a class="skip" href="#principal">Ir para o conteúdo</a>
   <header class="top">
     <div class="top-inner">
-      <a class="brand" href="#inicio"><img class="brand-logo" src="/assets/icone-192.png" width="44" height="44" alt=""><span>Conectados<span class="brand-sub">na Melhor Idade</span></span></a>
+      <a class="brand" href="#inicio"><img class="brand-logo" src="assets/icone-192.png" width="44" height="44" alt=""><span>Conectados<span class="brand-sub">na Melhor Idade</span></span></a>
       <div class="top-actions">
         <button type="button" id="install-app" hidden>Instalar aplicativo</button>
+        <button type="button" id="mobile-menu" aria-controls="main-menu" aria-expanded="false">Menu</button>
         <button type="button" id="read">Ouvir página</button>
         <button type="button" id="access" aria-expanded="false" aria-controls="settings">Acessibilidade</button>
       </div>
@@ -38,9 +45,11 @@
     <label><input type="checkbox" id="auto-read"> Ler conteúdo ao abrir</label>
     <label><input type="checkbox" id="sound"> Som de confirmação</label>
   </section>
+  <div id="install-help" class="settings" hidden aria-live="polite"></div>
+  <p id="demo-notice" class="connection-status" hidden>Modo demonstração. Aulas, exercícios, diagnóstico e Aurora funcionam neste aparelho. Turmas, mensagens e certificados precisam do servidor institucional.</p>
   <p id="connection-status" class="connection-status" role="status" hidden>Você está offline. As aulas baixadas e os exercícios continuam disponíveis neste dispositivo.</p>
   <div class="layout">
-    <nav aria-label="Menu principal">
+    <nav id="main-menu" aria-label="Menu principal">
       <span class="nav-caption">Minha jornada</span>
       <a href="#inicio" data-essential>Início</a>
       <a href="#guia">Guia e voz</a>
@@ -58,7 +67,11 @@
       <a href="#instrutor">Área do instrutor</a>
     </nav>
     <main id="principal" tabindex="-1" aria-labelledby="page-title">
-      <h1 id="page-title">Conectados na Melhor Idade</h1>
+      <div class="startup">
+        <img src="assets/icone-192.png" width="64" height="64" alt="">
+        <h1 id="page-title">Conectados na Melhor Idade</h1>
+      </div>
+      <noscript>Ative o JavaScript do navegador para abrir as aulas e usar a Aurora.</noscript>
     </main>
   </div>
   <footer>Conectados na Melhor Idade · Projeto de inclusão digital</footer>

@@ -55,7 +55,7 @@ function conversationHTML(items) {
 }
 
 async function familyView() {
-  view('Área da família', '<div id="family-panel"><p role="status">Carregando área da família…</p></div>' +
+  view('Área da família', '<div id="family-panel">' + skeleton('Carregando área da família…') + '</div>' +
     (user.id_usuario ? '<div id="family-invites"></div>' : ''));
   const panel = document.querySelector('#family-panel');
   if (user.id_usuario) loadFamilyInvites();
@@ -65,7 +65,11 @@ async function familyView() {
     panel.innerHTML = card('Acompanhamento de ' + data.aluno.nome, '<p>Olá, ' + esc(data.familiar) + '.</p><p>' + esc(data.concluidas) + ' de 4 aulas concluídas · ' + esc(data.aluno.nivel || 'Nível a descobrir') + '</p><button type="button" data-action="family-exit">Fechar área familiar</button>') +
       card('Aprendizagem na última semana','<p>' + esc(data.estudo.dias) + ' dia(s) de estudo · ' + esc(studyMinute(data.estudo.segundos)) +
         '</p><p>' + (data.medalhas.map(id => id===3?'Tutorial de videochamada':'Treino de PIX seguro').join(' · ') || 'As conquistas aparecem após a conclusão das aulas.') + '</p>') +
+      card('Evolução compartilhada',data.historico.length ? '<ol class="history">' + data.historico.map(item=>'<li><strong>' + esc(item.titulo) + '</strong>' +
+        (item.dia?' · '+esc(dateBR(item.dia)):'') + '</li>').join('') + '</ol>' : '<p>Os marcos aparecem aqui quando houver aulas concluídas.</p>') +
       (data.mensagensAtivas ? card('Incentivar o participante','<form id="family-encouragement"><label>Mensagem de incentivo<textarea name="texto" required maxlength="300" placeholder="Parabéns por reservar um tempo para aprender!"></textarea></label><button class="primary">Enviar incentivo ao participante</button></form>') : '') +
+      card('Mural de incentivos',data.incentivos.length ? '<ul class="history">' + data.incentivos.map(item=>'<li><p>' + esc(item.texto) + '</p><small>' +
+        esc(dateBR(item.enviado_em)) + '</small></li>').join('') + '</ul>' : '<p>Envie uma mensagem para celebrar a próxima conquista.</p>') +
       card('Avisos da instituição', data.avisos.map(item => '<h3>' + esc(item.titulo) + '</h3><p>' + esc(item.texto) + '</p>').join('') || '<p>Ainda não há avisos publicados.</p>') +
       card('Conversa com a equipe', conversationHTML(data.mensagens) + (data.mensagensAtivas ? '<form id="family-message"><label>Mensagem<textarea name="texto" required maxlength="800"></textarea></label><button class="primary">Enviar mensagem</button></form>' : '<p>A central de mensagens ainda está em configuração.</p>'));
   } catch(error) {
@@ -141,6 +145,7 @@ async function institutionalSubmit(form, data) {
       await api('/familia/incentivo',{data});
       form.reset();
       notify('Incentivo enviado ao participante.');
+      if (form.isConnected) await familyView();
       return true;
     case 'staff-family-open': await showFamilyThread(data.id,true); return true;
     case 'staff-family-send':
@@ -177,7 +182,8 @@ async function validateCertificate(code) {
 function voiceGuide() {
   view('Guia de navegação', card('Por onde você quer começar?', '<ol class="history"><li>' + link('diagnostico','Descobrir meu nível') + '</li><li>' + link('aulas','Escolher uma aula') + '</li><li>' + link('praticar','Praticar com segurança') + '</li><li>' + link('agenda','Consultar minha agenda') + '</li></ol>') +
     card('Usar a voz','<p>Ative o microfone e diga “início”, “aulas”, “praticar”, “perfil”, “agenda”, “família”, “Aurora” ou “ouvir página”. Neste navegador, o reconhecimento pode envolver o serviço de voz do fabricante.</p><button id="voice-start" type="button">Ativar microfone</button>') +
-    card('Passeio guiado','<p>Conheça quatro ações para começar.</p>' + link('tour','Começar passeio')));
+    card('Passeio guiado','<p>Conheça quatro ações para começar.</p>' + link('tour','Começar passeio')) +
+    card('Verificador desta tela','<button data-action="access-check">Verificar recursos de acesso</button><div id="access-results" aria-live="polite"></div>'));
 }
 
 function listen() {
@@ -197,8 +203,8 @@ function listen() {
       notify('Ditado preenchido. Confira a pergunta antes de enviar.');
       return;
     }
-    const command = normalize(words).replace(/[^a-z\s]/g,'').trim();
-    const routes = { inicio:'inicio',aulas:'aulas',praticar:'praticar',perfil:'perfil',agenda:'agenda',familia:'familia',aurora:'aurora',ajuda:'ajuda' };
+    const command = normalize(words).replace(/[^a-z\s]/g,'').trim().replace(/^(?:ir para|abra|abrir)\s+(?:a |o )?/,'');
+    const routes = { inicio:'inicio',aulas:'aulas',praticar:'praticar',perfil:'perfil',agenda:'agenda',familia:'familia',aurora:'aurora',ajuda:'ajuda',conquistas:'conquistas',guia:'guia',passeio:'tour' };
     if (command === 'ouvir pagina') speak(main.innerText);
     else if (Object.hasOwn(routes,command)) location.hash = routes[command];
     else notify('Comando não reconhecido. Veja os exemplos no guia.');
@@ -229,7 +235,7 @@ async function loadCalendar() {
   const target = document.querySelector('#institution-calendar');
   if (!target) return;
   const month = selectedMonth;
-  target.innerHTML = '<p role="status">Carregando calendário…</p>';
+  target.innerHTML = skeleton('Carregando calendário…');
   try {
     const result = await api('/participante/calendario?mes=' + encodeURIComponent(month));
     if (!target.isConnected || month !== selectedMonth) return;
@@ -246,17 +252,24 @@ function showAuroraSummary() {
     (next ? 'A próxima sugestão é ' + lessons[next].title + '. ' : 'Sua trilha inicial está completa. ') +
     (theme ? 'Reserve um tempo para revisar ' + theme.toLowerCase() + '.' : 'Continue praticando no seu ritmo.');
   const output = document.querySelector('#aurora-response');
-  output.textContent = text;
+  output.innerHTML = '<p role="status">' + esc(text) + '</p>';
   if (settings['auto-read']) speak(text);
 }
 
 function showAuroraExercise() {
-  const theme = reviewTheme();
-  const index = Math.max(0,exercises.findIndex(exercise => exercise.theme === theme));
-  const exercise = exercises[index];
+  const review = Evolucao.recovery(attempts);
+  const count = theme => attempts.filter(item=>item.tema===theme).length;
+  const theme = review?.tema || [...exercises].sort((a,b)=>count(a.theme)-count(b.theme))[0].theme;
+  const index = exercises.findIndex(item=>item.theme===theme);
+  const exercise = Evolucao.challenge(exercises[index],revisionPrompts[theme] || [],count(theme));
   const introductory = !user.level || user.level.startsWith('Iniciante');
   const output = document.querySelector('#aurora-response');
-  output.innerHTML = '<p><strong>Seu desafio de hoje</strong></p><p>' + esc(exercise.scenario) + '</p>' +
-    (introductory ? '<p>Pense em um contato ou aplicativo oficial que você já usou.</p>' : '<p>Explique como você verificaria a informação e o que diria a um amigo nessa situação.</p>') +
-    '<details><summary>Ver orientação</summary><p>' + esc(exercise.explanation) + '</p></details>' + link('praticar','Fazer exercício completo');
+  output.innerHTML = '<form id="aurora-revision" data-exercise="' + index + '"><fieldset><legend>' +
+    esc(review?'Revisão de '+theme:'Prática de '+theme) + '</legend><p>' + esc(exercise.scenario) + '</p>' +
+    (introductory ? '<p class="muted">Pense em um contato ou aplicativo oficial que você já usou.</p>' : '') +
+    exercise.choices.map(({text,canonical})=>'<label class="option"><input type="radio" name="choice" value="' + canonical + '" required>' + esc(text) + '</label>').join('') +
+    '</fieldset><button class="primary">Conferir minha resposta</button><p class="feedback" role="status"></p></form>';
+  const legend = output.querySelector('legend');
+  legend.tabIndex = -1;
+  legend.focus();
 }

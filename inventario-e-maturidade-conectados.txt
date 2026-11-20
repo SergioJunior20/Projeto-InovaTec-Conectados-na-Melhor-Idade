@@ -1,0 +1,152 @@
+CONECTADOS NA MELHOR IDADE
+Inventário de funcionalidades e nível de maturidade
+Referência revisada: branch feat/evolucao-institucional, commit 96b7194
+
+NÍVEL GERAL
+
+MVP funcional, nível 2 de 4. A plataforma permite demonstrar a jornada do
+participante e a operação do instrutor. Os fluxos principais já foram
+testados localmente. O próximo estágio é validar o uso em um piloto
+assistido, com pessoas idosas, instrutores e dispositivos reais.
+
+ESCALA USADA NESTE DOCUMENTO
+
+1 — Inicial: a função existe em uma forma básica ou de escopo limitado.
+2 — Funcional: o fluxo principal está implementado e pode ser testado.
+3 — Validado em piloto: o fluxo foi observado em uso real e os pontos
+    essenciais de acessibilidade e operação foram verificados.
+4 — Validado em produção: há evidência de operação contínua, recuperação
+    de dados, monitoramento e desempenho na escala pretendida.
+
+O nível descreve o grau de maturidade de cada área. As funções que ainda
+faltam aparecem em “Lacunas” em cada seção.
+
+1. JORNADA DO PARTICIPANTE — NÍVEL 2
+
+O que já tem
+- Diagnóstico inicial e sugestão de aula conforme o nível digital.
+- Painel, passeio guiado, perfil, agenda mensal e pedidos de ajuda.
+- Biblioteca pesquisável com filtros e guias para download.
+- Quatro tutoriais: WhatsApp, fotos, videochamadas e PIX seguro.
+- Treino de reconhecimento de ícones e exercícios de segurança digital
+  com alternativas, correção e orientação.
+- Progresso, frequência, histórico e tempo com a aula aberta, medido
+  enquanto a aba está visível.
+
+Lacunas
+- Catálogo maior, editor de aulas e vídeos com legendas.
+- Simulações que reproduzam uma tarefa completa, como uma videochamada
+  do início ao fim. Hoje o tema é ensinado em tutorial.
+- Retomada de um passo específico da aula em outro dispositivo.
+
+2. COMPANHEIRO DIGITAL E AURORA — NÍVEL 1
+
+O que já tem
+- O Companheiro exibe lembretes de retomada, celebrações e a próxima
+  atividade sugerida.
+- A Aurora usa respostas do curso, explica a aula em contexto, resume
+  progresso e propõe desafios conforme o nível e os erros recentes.
+- Ditado e leitura em voz alta quando o navegador oferece suporte.
+- O modo adaptativo usa regras que consideram o nível, erros e tempo
+  nas etapas. O participante pode mudar a apresentação manualmente.
+
+Lacunas
+- Conversação generativa, criação livre de exercícios e previsão de
+  desistência baseada em dados validados.
+- Acompanhamento adaptativo contínuo entre aparelhos. Parte da
+  personalização usa registros do navegador atual.
+
+3. GAMIFICAÇÃO — NÍVEL 2
+
+O que já tem
+- XP, nível da jornada, sequência de estudos, missões diárias e semanais
+  e medalhas por progresso e prática.
+- Compartilhamento voluntário de uma frase de conquista.
+
+Lacunas
+- Sincronização de XP e sequência entre navegadores e aparelhos.
+- Evidência de quais incentivos ajudam o público a voltar a estudar.
+
+4. ACESSIBILIDADE — NÍVEL 2
+
+O que já tem
+- Fonte ajustável até 200%, OpenDyslexic, alto contraste, modo
+  simplificado e modo que mantém apenas as ações essenciais.
+- Controles maiores, indicação de foco, navegação por teclado,
+  leitura em voz alta e comandos de voz compatíveis.
+
+Lacunas
+- Testes documentados com leitores de tela, zoom, navegação completa
+  por teclado e aparelhos reais.
+- Avaliação formal de conformidade com a WCAG 2.1 AA.
+
+5. INSTRUTORES E CERTIFICADOS — NÍVEL 2
+
+O que já tem
+- Cadastro de participantes e turmas, convites, matrículas,
+  observações, calendário, presença, avisos e respostas de suporte.
+- Indicadores por turma, evolução diária, dificuldades por tema,
+  engajamento, auditoria e exportação em PDF e Excel.
+- Certificado PDF após as quatro aulas, com QR Code e consulta pública
+  de código, curso e data.
+
+Lacunas
+- Paginação das listas, gestão de contas pelo painel e fila de
+  acompanhamento pedagógico com responsável e situação do atendimento.
+- Definição institucional de assinatura e carga horária do certificado.
+
+6. FAMÍLIA E COMUNIDADE — NÍVEL 2
+
+O que já tem
+- Convite familiar revogável, resumo do progresso, estudo recente,
+  avisos e mensagens de incentivo. As mensagens familiares são
+  criptografadas quando a chave da instituição está configurada.
+- Publicações compartilhadas na instituição após aprovação da equipe,
+  com registro de moderação.
+
+Lacunas
+- Preferências mais detalhadas de compartilhamento com familiares.
+- Discussões com respostas encadeadas, eventos online e notificações push.
+
+7. PWA E USO OFFLINE — NÍVEL 2
+
+O que já tem
+- Manifesto de instalação e cache de ativos públicos para abrir aulas
+  e práticas após um primeiro acesso conectado.
+- Fila local para reenviar progresso e tempo de estudo quando a
+  conexão volta e a sessão do participante continua ativa.
+
+Lacunas
+- Teste de instalação e reconexão em celulares reais.
+- Aplicativos nativos, push e sincronização offline de avaliações,
+  mensagens e calendário.
+
+8. INFRAESTRUTURA, BANCO E SEGURANÇA — NÍVEL 2
+
+O que já tem
+- Node.js, Express e MySQL. Migrações aditivas e configuração de um
+  banco por domínio institucional.
+- Contas individuais de instrutor configuráveis, segundo fator,
+  permissões por perfil e limitação de requisições por processo.
+- Verificações de saúde e prontidão, logs de erros em JSON, script de
+  backup MySQL e verificação de integridade por SHA-256.
+
+Lacunas
+- Backup agendado e restauração ensaiada no ambiente institucional.
+- Monitoramento centralizado, teste de carga e regras institucionais
+  de retenção, acesso e atendimento a pedidos de privacidade.
+
+O QUE JÁ FOI VERIFICADO
+
+Na preparação dos commits, passaram quatro testes automatizados.
+A suíte inclui isolamento entre duas instituições, autenticação,
+matrículas e certificados, exportações, revogação de acesso familiar,
+moderação, regras de XP e escopo do cache offline. A avaliação visual,
+assistiva e em campo segue pendente.
+
+COMO USAR ESTE INVENTÁRIO
+
+Escolha uma seção e identifique se o próximo passo seria criar uma
+função, melhorar uma função existente ou validar algo que já foi feito.
+Use o mapa de oportunidades para comparar ideias e o roteiro do piloto
+para organizar o teste com a instituição.

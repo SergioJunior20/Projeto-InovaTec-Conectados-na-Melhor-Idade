@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.env
+**/.env.*
+.deploy
+Back-end/test
+Back-end/browser-test
+Back-end/playwright.config.js
+Back-end/playwright-report
+Back-end/test-results

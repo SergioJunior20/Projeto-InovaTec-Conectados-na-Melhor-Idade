@@ -29,16 +29,22 @@ test('the service worker only caches public course files and provides the offlin
   const routes = {};
   const app = join(__dirname,'../../Front-end');
   const cached = new Map();
+  const origin = 'https://conectados.example';
+  const scope = origin + '/projeto/';
   const context = {
     URL,
+    Request,
     self: {
-      location: {origin:'https://conectados.example'},
+      location: {href:scope+'sw.js'},
+      skipWaiting() {},
       addEventListener(name,handler){routes[name]=handler;}
     },
     fetch: async () => { throw new Error('offline'); },
     caches: {
-      open: async () => ({addAll: async paths => { for (const path of paths) cached.set(path,readFileSync(join(app,path.slice(1)))); }}),
-      match: async path => cached.get(path)
+      open: async () => ({
+        addAll: async requests => { for (const request of requests) cached.set(request.url,readFileSync(join(app,request.url.slice(scope.length)))); },
+        match: async url => cached.get(url)
+      })
     }
   };
   vm.runInNewContext(readFileSync(join(app,'sw.js'),'utf8'),context);
@@ -48,7 +54,7 @@ test('the service worker only caches public course files and provides the offlin
   function response(path,mode='cors',method='GET') {
     let result;
     routes.fetch({
-      request:{method,mode,url:'https://conectados.example'+path},
+      request:{method,mode,url:scope+path.slice(1)},
       respondWith(value){result=value;}
     });
     return result;
@@ -59,4 +65,20 @@ test('the service worker only caches public course files and provides the offlin
     assert.equal(response(path),undefined);
   }
   assert.equal(response('/progresso','cors','POST'),undefined);
+});
+
+const evolution = require('../../Front-end/JS/evolucao');
+
+test('confidence uses distinct evidence and personal leagues progress by XP',() => {
+  assert.deepEqual(evolution.confidence(['pix','pix'],['seguranca','seguranca'],4,4),{evidence:2,total:8,percent:25});
+  assert.equal(evolution.league(120).current.xp,120);
+  assert.equal(evolution.league(120).next.xp,200);
+});
+
+test('recovery uses recent unresolved mistakes and keeps canonical answers when reordered',() => {
+  const attempts = [{tema:'pix',correta:false},{tema:'pix',correta:true},{tema:'senhas',correta:false}];
+  assert.equal(evolution.recovery(attempts).tema,'senhas');
+  const variant = evolution.challenge({theme:'senhas',scenario:'Padrao',choices:['A','B'],correct:1},['Primeiro','Segundo'],1);
+  assert.equal(variant.scenario,'Segundo');
+  assert.equal(variant.choices[0].canonical,variant.correct);
 });

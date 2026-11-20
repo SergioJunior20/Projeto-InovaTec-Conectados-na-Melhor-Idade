@@ -1,0 +1,38 @@
+name: Publicar demonstracao no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Front-end/**'
+      - 'scripts/build-demo.cjs'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: conectados-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacao.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/configure-pages@v5
+      - run: node scripts/build-demo.cjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .deploy/demo
+      - uses: actions/deploy-pages@v4
+        id: publicacao

@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: conectados-melhor-idade
+    runtime: docker
+    plan: free
+    healthCheckPath: /prontidao
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: DB_TLS
+        value: "1"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: INSTRUTOR_TOKEN
+        sync: false
+      - key: INSTRUTOR_TOTP_HEX
+        sync: false
+      - key: DADOS_CHAVE_HEX
+        sync: false

@@ -1,0 +1,107 @@
+CONECTADOS NA MELHOR IDADE
+Mapa de oportunidades para a próxima versão
+
+PARA QUE SERVE ESTE DOCUMENTO
+
+O projeto já oferece aulas guiadas, prática de segurança, acompanhamento
+institucional e apoio familiar. As ideias abaixo são hipóteses. Use-as para
+decidir quais problemas merecem atenção após observar o uso da plataforma.
+Os testes sugeridos podem começar com protótipos ou atividades acompanhadas.
+
+1. PRATICAR UMA TAREFA COMPLETA
+
+Oportunidade: criar um simulador de videochamada com uma sequência de ações.
+O participante seleciona um contato fictício, inicia a chamada e aprende
+como ligar o microfone e encerrar a conversa.
+
+Como testar: monte quatro telas e observe se a pessoa consegue executar a
+mesma sequência em um celular de demonstração após usar o simulador.
+
+Sinal de valor: a pessoa consegue completar mais etapas sem instruções
+verbais do instrutor.
+
+2. APRENDER A VERIFICAR MENSAGENS RECEBIDAS
+
+Oportunidade: criar uma prática guiada em que o aluno identifica um pedido
+urgente, decide como verificar a informação e escolhe um canal seguro.
+Use cenários fictícios e evite pedir que o participante cole conversas
+reais, números de telefone ou informações bancárias.
+
+Como testar: apresente dois cenários diferentes, um antes e outro depois
+do exercício. Peça que a pessoa explique o próximo passo em voz alta.
+
+Sinal de valor: a pessoa escolhe verificar por um contato conhecido e
+consegue explicar por que tomou essa decisão.
+
+3. CONTINUAR DO MESMO PASSO EM OUTRO DISPOSITIVO
+
+Oportunidade: guardar o último passo de uma aula na conta do participante.
+Essa possibilidade é relevante quando o aluno começa no computador da
+instituição e tenta continuar em casa pelo celular.
+
+Como testar: observe uma troca de dispositivo em um protótipo com o
+botão “Continuar de onde parei”. Verifique também se é fácil encerrar a
+sessão em um aparelho compartilhado e recuperar o acesso posteriormente.
+
+Sinal de valor: a pessoa retoma o passo correto sem precisar procurar
+novamente pela aula, e a equipe consegue orientar a troca de dispositivo.
+
+4. DAR AO INSTRUTOR UMA FILA DE ACOMPANHAMENTO
+
+Oportunidade: reunir pedidos de ajuda, dificuldades recorrentes e pausas
+no estudo em uma única lista. Cada item deve mostrar a origem do sinal e
+permitir registrar o acompanhamento. A decisão de intervir fica com a
+equipe pedagógica.
+
+Como testar: durante uma semana, organize manualmente uma lista com
+dados fictícios ou autorizados e peça que dois instrutores a usem para
+preparar o próximo encontro.
+
+Sinal de valor: a equipe encontra mais rapidamente quem precisa de
+orientação e consegue explicar por que priorizou cada atendimento.
+
+5. LEVAR A AULA PARA FORA DA TELA
+
+Oportunidade: oferecer guias impressos em letra grande, com uma ação por
+bloco e espaço para anotações. Um mesmo material pode apoiar a aula em
+grupo e servir para revisão em casa.
+
+Como testar: imprima uma versão da aula de videochamada e observe se a
+pessoa consegue usar o guia em casa ou durante uma prática independente.
+
+Sinal de valor: o participante encontra a instrução necessária sem
+precisar abrir novamente a plataforma ou pedir ajuda para localizá-la.
+
+6. DEIXAR O PARTICIPANTE ESCOLHER COMO RECEBER APOIO
+
+Oportunidade: ampliar o apoio familiar com preferências claras sobre
+o que compartilhar. Por exemplo, uma pessoa pode querer receber incentivo
+após concluir uma aula, mas preferir manter os erros em exercícios visíveis
+apenas para si e para a equipe pedagógica.
+
+Como testar: mostre duas opções simples de compartilhamento e peça que
+participante e familiar expliquem, separadamente, o que cada pessoa verá.
+
+Sinal de valor: ambos conseguem explicar as permissões, e o participante
+localiza sozinho a opção para alterá-las ou encerrar o acesso.
+
+COMO ESCOLHER O QUE IMPLEMENTAR PRIMEIRO
+
+Para cada oportunidade, registre quatro itens: quem relatou o problema,
+em que tarefa ele aparece, qual é o menor teste possível e qual resultado
+justifica desenvolver a solução. Dê prioridade a dificuldades que aparecem
+em mais de uma observação e afetam uma tarefa importante.
+
+Minha sugestão é começar pela simulação de videochamada e pelo guia
+impresso. Ambos permitem observar se o aprendizado se transfere para
+uma tarefa real. Se a principal dificuldade observada estiver no trabalho
+da equipe, priorize o teste da fila de acompanhamento.
+
+FICHA PARA PREENCHER COM A EQUIPE
+
+Oportunidade escolhida:
+Problema observado e em qual tarefa:
+Pessoas afetadas:
+Menor teste que conseguimos realizar:
+Resultado que justificará implementar:
+Responsável e data da próxima revisão:

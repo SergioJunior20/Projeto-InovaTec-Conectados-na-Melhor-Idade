@@ -33,11 +33,12 @@ test('institutions isolate authenticated flows and preserve teaching records', {
     instrutores:[{ id:'tutora',chave:hex(24),totp:hex(20) }]
   }));
   const db = await mysql.createConnection({ ...credentials,multipleStatements:true });
-  let server, app;
+  let server, app, inference;
+  let prompt;
   const env = { ...process.env };
   try {
     for (const tenant of tenants) {
-      for (const file of ['Database','dados_iniciais','evolucao','institucional','jornada','jornada']) {
+      for (const file of ['Database','dados_iniciais','evolucao','institucional','jornada','percurso','percurso']) {
         const source = fs.readFileSync(path.join(__dirname,'../../Database',file + '.sql'),'utf8');
         await db.query(source.replace(/^\uFEFF/,'').replaceAll('conectado_melhor_idade',tenant.banco));
         if (file === 'Database') databases.push(tenant.banco);
@@ -45,6 +46,16 @@ test('institutions isolate authenticated flows and preserve teaching records', {
     }
     process.env.INSTITUICOES_JSON = JSON.stringify(tenants);
     process.env.NODE_ENV = 'test';
+    inference = http.createServer(async (req,res) => {
+      const body = [];
+      for await (const chunk of req) body.push(chunk);
+      prompt = JSON.parse(Buffer.concat(body));
+      if (req.url!=='/api/chat') return res.writeHead(404).end();
+      res.writeHead(200,{'Content-Type':'application/json'}).end(JSON.stringify({message:{content:'Abra a conversa e toque no ícone de câmera.'}}));
+    }).listen(0,'127.0.0.1');
+    await new Promise(resolve=>inference.once('listening',resolve));
+    process.env.AURORA_MODELO_LOCAL = 'teste-local';
+    process.env.AURORA_PORTA_LOCAL = String(inference.address().port);
     app = require('../server');
     server = app.listen(0,'127.0.0.1');
     await new Promise((resolve,reject) => { server.once('listening',resolve); server.once('error',reject); });
@@ -80,11 +91,34 @@ test('institutions isolate authenticated flows and preserve teaching records', {
     const {data:other} = await request('/usuarios',{...profile,nome:'Participante B'},{tenant:1});
     assert.equal(student.id_usuario,other.id_usuario);
     await request('/sessao',null,{cookie,tenant:1,status:401});
+    const question = {tema:'video',pergunta:'Como começo uma videochamada?',modeloLocal:true};
+    await request('/aurora/consulta',question,{status:401});
+    await request('/aurora/consulta',{...question,modeloLocal:false},{cookie,status:400});
+    await request('/aurora/consulta',{...question,pergunta:'Meu código é 123456.'},{cookie,status:422});
+    const answer = (await request('/aurora/consulta',question,{cookie})).data;
+    assert.match(answer.orientacao,/ícone de câmera/);
+    assert.equal(prompt.stream,false);
+    assert.equal(prompt.messages[1].content,question.pergunta);
+    assert.ok(!JSON.stringify(prompt).includes(profile.nome));
     await request('/instrutor/turmas',{nome:'Turma digital'},{staff});
     await request('/instrutor/matriculas',{id_usuario:student.id_usuario,id_turma:1},{staff});
     await request('/instrutor/encontros',{id_turma:1,titulo:'Aula de teste',dia:'2026-11-25'},{staff});
     assert.equal((await request('/participante/calendario?mes=2026-11',null,{cookie})).data.length,1);
     await request('/instrutor/presencas',{id_encontro:1,id_usuario:student.id_usuario,presente:true},{staff});
+    const assessment = {tema:'Mensagens suspeitas',choice:0,id_usuario:student.id_usuario,evento:randomUUID()};
+    await Promise.all([request('/avaliacoes',assessment,{cookie}),request('/avaliacoes',assessment,{cookie})]);
+    await request('/avaliacoes',{...assessment,id_usuario:student.id_usuario+100},{cookie,status:403});
+    const studyReport = (await request('/participante/estudo',null,{cookie})).data;
+    assert.equal(studyReport.avaliacoes.length,1);
+    let teacherData = (await request('/instrutor/jornada',null,{staff})).data;
+    assert.equal(Number(teacherData.mapa[0].precisam_revisar),1);
+    assert.equal(Number(teacherData.mapa[0].participantes),1);
+    await request('/avaliacoes',{...assessment,choice:1,evento:randomUUID()},{cookie});
+    teacherData = (await request('/instrutor/jornada',null,{staff})).data;
+    assert.equal(Number(teacherData.mapa[0].precisam_revisar),0);
+    await request('/instrutor/participantes?pagina=0',null,{staff,status:400});
+    const directory = (await request('/instrutor/participantes?busca=Participante',null,{staff})).data;
+    assert.deepEqual(directory.participantes.map(item=>item.nome),[profile.nome]);
     await request('/instrutor/encerrar-matricula',{id_usuario:student.id_usuario,id_turma:1},{staff});
     assert.equal((await request('/participante/calendario?mes=2026-11',null,{cookie})).data.length,0);
     for (const id_licao of [1,2,3,4]) await request('/progresso',{id_usuario:student.id_usuario,id_licao,concluido:true},{cookie});
@@ -109,6 +143,9 @@ test('institutions isolate authenticated flows and preserve teaching records', {
     await request('/familia/mensagens',{texto:'Mensagem de teste'},{cookie:family});
     await request('/familia/incentivo',{texto:'Muito bem!'},{cookie:family});
     assert.equal((await request('/participante/incentivos',null,{cookie})).data[0].texto,'Muito bem!');
+    const familyDashboard = (await request('/familia/painel',null,{cookie:family})).data;
+    assert.equal(familyDashboard.historico.length,4);
+    assert.equal(familyDashboard.incentivos[0].texto,'Muito bem!');
     await request('/instrutor/familia/1',{texto:'Resposta de teste'},{staff});
     const thread = (await request('/familia/painel',null,{cookie:family})).data.mensagens;
     assert.equal(thread[1].texto,'Resposta de teste');
@@ -136,11 +173,12 @@ test('institutions isolate authenticated flows and preserve teaching records', {
     const audit = (await request('/instrutor/auditoria',null,{staff})).data;
     assert.ok(audit.some(event => event.instrutor === account.id && event.acao === 'mensagem-familiar'));
   } finally {
+    if (inference) await new Promise(resolve=>inference.close(resolve));
     if (server) await new Promise(resolve => server.close(resolve));
     if (app) await app.locals.closeDatabases();
     for (const name of databases) await db.query('DROP DATABASE ' + name);
     await db.end();
-    for (const key of ['INSTITUICOES_JSON','NODE_ENV']) {
+    for (const key of ['INSTITUICOES_JSON','NODE_ENV','AURORA_MODELO_LOCAL','AURORA_PORTA_LOCAL']) {
       if (env[key] === undefined) delete process.env[key];
       else process.env[key] = env[key];
     }
