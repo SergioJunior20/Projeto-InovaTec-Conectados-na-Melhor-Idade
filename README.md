@@ -92,7 +92,6 @@ O curso é dividido em módulos progressivos, com exercícios práticos e acompa
 
 | Nome         | GitHub |
 |--------------|--------|
-| **Ana Eliza**| [@anaelizatx](https://github.com/anaelizatx) |
 | **Lyvia**    | [@LyviaVilela](https://github.com/LyviaVilela) |
 | **Nicole**   | [@niiukiyo](https://github.com/niiukiyo) |
 | **Sergio**   | [@SergioJunior20](https://github.com/SergioJunior20) |
